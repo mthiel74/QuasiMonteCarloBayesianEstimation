@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Wolfram
+*.mx
+community/.img-cache/
+
+# bulk / regenerable raw downloads
+data/raw/
+
+# scratch
+/tmp/
+*.log
