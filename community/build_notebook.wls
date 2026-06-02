@@ -319,11 +319,13 @@ bounded variation ", imath@RowBox[{"V", "(", "f", ")"}],
 product of the function's variation and the points' discrepancy:"}],
 
 displayMath[RowBox[{
-   AbsoluteValue[RowBox[{
+   "\[LeftBracketingBar]",
+   RowBox[{
      RowBox[{FractionBox["1", "N"],
        UnderoverscriptBox["\[Sum]", RowBox[{"n", "=", "1"}], "N"],
        RowBox[{"f", "(", SubscriptBox["x", "n"], ")"}]}], "-",
-     RowBox[{"\[Integral]", RowBox[{"f", "(", "x", ")"}], RowBox[{"\[DifferentialD]", "x"}]}]}]],
+     RowBox[{"\[Integral]", RowBox[{"f", "(", "x", ")"}], RowBox[{"\[DifferentialD]", "x"}]}]}],
+   "\[RightBracketingBar]",
    "\[LessEqual]",
    RowBox[{"V", "(", "f", ")"}], " ",
    SubsuperscriptBox["D", "N", "*"]}]],
