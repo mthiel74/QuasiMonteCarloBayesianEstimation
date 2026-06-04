@@ -1,29 +1,13 @@
 #!/usr/bin/env wolframscript
 (* ::Package:: *)
 
-(*  Build community/qmc_bayes.nb — the educational long-form notebook for
-    the Wolfram Community submission "Quasi-Monte Carlo for a real
-    Bayesian estimation".
+(*  Build community/qmc_bayes.nb — the Wolfram Community post
+    "Quasi-Monte Carlo for a real Bayesian estimation".
 
-    Architecture (same pattern as the ENSO-emergence builder): accumulate
-    fully-formed Cell expressions into one list, then CreateDocument +
-    NotebookSave so Image cells serialise to disk as binary rasters.
-
-    Sections
-    --------
-      Abstract
-      Setup
-      1. The problem: averaging, and the square-root wall
-      2. Low-discrepancy sequences (Halton, Sobol')
-      3. A real Bayesian problem: pharmacokinetics
-      4. The fit: posterior of a Theophylline subject
-      5. The convergence law (the headline)
-      6. The (log N)^d dimension dependence
-      7. Correctness: synthetic-truth recovery
-      8. The practical pay-off
-      9. Conclusions
-     10. References
-     11. Reproducibility
+    Layout follows the teal "Roboto Condensed" house style of the
+    UK-rivers post (433126256.nb): left-aligned text, teal section
+    headings, indented Input/Output cells with brackets, a hero
+    animation up top.  No "how to cite" section.
 *)
 
 repoRoot = ParentDirectory @ DirectoryName[$InputFileName];
@@ -31,165 +15,185 @@ imgDir   = FileNameJoin[{repoRoot, "docs", "images"}];
 outNb    = FileNameJoin[{repoRoot, "community", "qmc_bayes.nb"}];
 outPdf   = FileNameJoin[{repoRoot, "community", "qmc_bayes.pdf"}];
 
+tealCol = RGBColor[0.153, 0.51, 0.64];
+
 (* ==================================================================
-   Cell-builder helpers
+   Stylesheet — adopted from the reference post.
    ================================================================== *)
+styleDefs = Notebook[{
+   Cell[StyleData[StyleDefinitions -> "Default.nb"]],
+   Cell[StyleData["Text"], CellMargins -> {{0, 12}, {7, 8}}, FontSize -> 15,
+      LineSpacing -> {1, 3}],
+   Cell[StyleData["Title"], CellMargins -> {{0, 3}, {15, 0}},
+      FontFamily -> "Roboto Condensed", FontColor -> tealCol],
+   Cell[StyleData["Subtitle"], CellMargins -> {{0, 3}, {18, 12}},
+      FontFamily -> "Roboto Condensed", FontSize -> 19,
+      FontColor -> GrayLevel[0.3]],
+   Cell[StyleData["Section"], CellMargins -> {{0, 3}, {12, 22}},
+      FontFamily -> "Roboto Condensed", FontSize -> 28, FontColor -> tealCol],
+   Cell[StyleData["Subsection"], CellMargins -> {{0, 3}, {8, 16}},
+      FontFamily -> "Roboto Condensed", FontSize -> 20,
+      FontColor -> RGBColor[0.2, 0.42, 0.5]],
+   Cell[StyleData["Subsubsection"], CellMargins -> {{0, 3}, {6, 12}},
+      FontFamily -> "Roboto Condensed", FontSize -> 16],
+   Cell[StyleData["Input"], CellMargins -> {{45, 5}, {4, 6}},
+      StyleHints -> <|"CodeFont" -> "Source Sans Pro"|>, FontSize -> 13],
+   Cell[StyleData["Output"], CellMargins -> {{45, 5}, {8, 6}}, FontSize -> 13],
+   Cell[StyleData["Item"], CellMargins -> {{24, 12}, {4, 6}}, FontSize -> 15],
+   Cell[StyleData["DisplayFormula"], CellMargins -> {{36, 10}, {10, 10}}],
+   Cell[StyleData["Program"], CellMargins -> {{45, 12}, {6, 6}},
+      FontFamily -> "Courier", FontSize -> 12]},
+   Visible -> False];
 
-title[txt_]    := Cell[txt, "Title"];
-subtitle[txt_] := Cell[txt, "Subtitle"];
-hd1[txt_]      := Cell[txt, "Section"];
-hd2[txt_]      := Cell[txt, "Subsection"];
-
-para[stuff_] := Cell[TextData[stuff], "Text", CellMargins -> {{50, 50}, {6, 6}}];
-
-abstractCell[stuff_] := Cell[TextData[stuff], "Text",
-   FontSize -> 14, CellMargins -> {{60, 60}, {6, 6}},
-   Background -> RGBColor[0.98, 0.96, 0.90]];
+(* ==================================================================
+   Cell builders
+   ================================================================== *)
+title[t_]    := Cell[t, "Title"];
+subtitle[t_] := Cell[t, "Subtitle"];
+section[t_]  := Cell[t, "Section"];
+subsec[t_]   := Cell[t, "Subsection"];
+para[s_]     := Cell[TextData[s], "Text"];
+lead[s_]     := Cell[TextData[s], "Text", FontSize -> 16,
+   FontColor -> GrayLevel[0.2]];
+item[s_]     := Cell[TextData[s], "Item"];
 
 bold[s_] := StyleBox[s, FontWeight -> Bold];
 ital[s_] := StyleBox[s, FontSlant -> Italic];
 math[s_] := StyleBox[s, FontFamily -> "Times", FontSlant -> Italic];
-mono[s_] := StyleBox[s, FontFamily -> "Courier"];
+mono[s_] := StyleBox[s, FontFamily -> "Source Code Pro", FontColor -> tealCol];
 
-imath[boxes_] := Cell[BoxData @ FormBox[boxes, TraditionalForm], "InlineFormula"];
-sub[base_, k_] := imath @ SubscriptBox[base, k];
-pow[base_, e_] := imath @ SuperscriptBox[base, e];           (* base^e *)
-powN[e_] := imath @ SuperscriptBox["N", e];                  (* N^e *)
-bigO[boxes_] := imath @ RowBox[{"O", "(", boxes, ")"}];
+imath[b_]      := Cell[BoxData @ FormBox[b, TraditionalForm], "InlineFormula"];
+sub[a_, k_]    := imath @ SubscriptBox[a, k];
+pow[a_, e_]    := imath @ SuperscriptBox[a, e];
+powN[e_]       := imath @ SuperscriptBox["N", e];
+bigO[b_]       := imath @ RowBox[{"O", "(", b, ")"}];
+displayMath[e_] := Cell[BoxData @ FormBox[e, TraditionalForm], "DisplayFormula"];
 
-displayMath[expr_] := Cell[BoxData @ FormBox[expr, TraditionalForm],
-   "DisplayFormula", CellMargins -> {{80, 50}, {8, 8}}];
+caption[args__] := Cell[TextData[{args}], "Text", FontSlant -> Italic,
+   FontSize -> 11.5, FontColor -> GrayLevel[0.4], CellMargins -> {{45, 40}, {2, 14}}];
 
-(* Static image cell — Import + Image[..., ImageSize] so the FE serialises
-   a compressed raster into the .nb. *)
-imgWidth = 680;
+heroCaption[args__] := Cell[TextData[{args}], "Text", FontSize -> 12,
+   FontColor -> GrayLevel[0.4]];
+
+codeIn[c_String] := Cell[c, "Program", ShowStringCharacters -> False,
+   Background -> RGBColor[0.96, 0.97, 0.98]];
+
+wlIn[c_String] := Cell[c, "Input"];
+
+link[t_String, u_String] := Sequence[StyleBox[t, FontWeight -> "SemiBold"],
+   " (", StyleBox[u, FontFamily -> "Source Code Pro", FontSize -> 10], ")"];
+
+callout[args__] := Cell[TextData[{args}], "Text", FontSize -> 13,
+   CellMargins -> {{36, 40}, {8, 8}}, Background -> RGBColor[0.93, 0.96, 0.97],
+   CellFrame -> {{3, 0}, {0, 0}}, CellFrameColor -> tealCol, FrameMargins -> 12];
+
 imgCell[file_] := Module[{path = FileNameJoin[{imgDir, file}], im},
    If[FileExistsQ[path],
-     im = Image[Import[path], ImageSize -> imgWidth];
+     im = Image[Import[path], ImageSize -> 660];
      Cell[BoxData @ ToBoxes[im], "Output", ShowCellLabel -> False,
-        TextAlignment -> Center, CellMargins -> {{Automatic, Automatic}, {10, 6}}],
+        CellMargins -> {{45, 5}, {8, 8}}],
      Cell[TextData[{bold["[ missing figure: " <> file <> " ]"]}], "Text",
-        FontColor -> RGBColor[0.7, 0.1, 0.1], TextAlignment -> Center]]];
+        FontColor -> RGBColor[0.7, 0.1, 0.1]]]];
 
-captionCell[args__] := Cell[TextData[{args}], "Text",
-   FontSlant -> Italic, FontSize -> 11, FontColor -> GrayLevel[0.35],
-   CellMargins -> {{70, 70}, {2, 14}}];
-
-codeIn[code_String] := Cell[code, "Program",
-   CellMargins -> {{60, 30}, {6, 6}}, FontFamily -> "Courier", FontSize -> 11,
-   ShowStringCharacters -> False, Background -> RGBColor[0.95, 0.96, 0.98]];
-
-wlIn[code_String] := Cell[code, "Input",
-   CellMargins -> {{60, 30}, {6, 6}}, FontSize -> 11];
-
-link[txt_String, url_String] := Sequence[
-   StyleBox[txt, FontWeight -> "SemiBold"],
-   " (", StyleBox[url, FontFamily -> "Courier", FontSize -> 10], ")"];
-
-calloutCell[stuff_, bg_:RGBColor[0.93, 0.95, 0.99], frame_:RGBColor[0.45, 0.55, 0.70]] :=
-   Cell[TextData[stuff], "Text", FontSize -> 11, FontColor -> GrayLevel[0.25],
-      CellMargins -> {{70, 70}, {6, 4}}, Background -> bg,
-      CellFrame -> {{4, 0}, {0, 0}}, CellFrameColor -> frame];
+animCell[file_] := Module[{path = FileNameJoin[{imgDir, file}], all, anim},
+   If[! FileExistsQ[path],
+     Return @ Cell[TextData[{bold["[ missing animation: " <> file <> " ]"]}],
+        "Text", FontColor -> RGBColor[0.7, 0.1, 0.1]]];
+   all = Import[path, {"GIF", "ImageList"}];
+   all = ColorQuantize[ImageResize[#, {600}], 220] & /@ all;
+   anim = AnimatedImage[all, FrameRate -> 1.4, AnimationRunning -> True,
+      AnimationRepetitions -> Infinity];
+   Cell[BoxData @ ToBoxes[anim], "Output", ShowCellLabel -> False,
+      CellMargins -> {{20, 5}, {6, 10}}]];
 
 $allCells = {};
 writeAll[cs_List] := ($allCells = Join[$allCells, cs];
-   Print["  +", Length[cs], " cells (total ", Length[$allCells], ")"]);
+   Print["  +", Length[cs], " cells (", Length[$allCells], ")"]);
 
 
 (* ==================================================================
-   TITLE & ABSTRACT
+   HERO + TITLE + LEAD
    ================================================================== *)
-
 writeAll[{
+
+animCell["hero.gif"],
+
+heroCaption[
+   "The whole post in one animation. Left: ", bold["Monte Carlo"],
+   " points scattered at random clump and leave gaps. Right: ",
+   bold["Sobol\[CloseCurlyQuote]"], " low-discrepancy points fill the same \
+square evenly. Below: the error of a sample integral as the points \
+accumulate \[LongDash] Monte Carlo crawls down the ", math["1/\[Sqrt]N"],
+   " line while Sobol\[CloseCurlyQuote] plunges along ", math["1/N"],
+   ". Generated near the end of this post with one call to ",
+   mono["heroAnimation[]"], "."],
 
 title["Quasi-Monte Carlo for a real Bayesian estimation"],
 
-subtitle["Sobol\[CloseCurlyQuote] and Halton sequences versus plain Monte \
-Carlo for a six-parameter pharmacokinetic inference \[LongDash] measuring \
-the near-1/N convergence of quasi-Monte Carlo against Monte \
-Carlo\[CloseCurlyQuote]s 1/\[Sqrt]N"],
+subtitle["Sobol\[CloseCurlyQuote] and Halton sequences against plain Monte \
+Carlo on a six-parameter pharmacokinetic fit \[LongDash] and the textbook \
+convergence gap, measured on real data"],
 
-Cell["Wolfram Community submission \[LongDash] June 2026", "Subsubtitle",
-   FontSlant -> Italic, FontColor -> GrayLevel[0.4]],
+lead[{"Almost every number a Bayesian reports \[LongDash] a posterior mean, \
+a credible interval, a predicted drug concentration \[LongDash] is secretly \
+an ", bold["integral"], " over the space of unknown parameters. This post \
+is about computing those integrals an order of magnitude more cheaply."}],
 
-hd1["Abstract"],
+para[{"The default tool is ", bold["Monte Carlo"], ": average the integrand \
+over random samples. It is universal and assumption-free, but its error \
+shrinks only as ", powN[RowBox[{"-", "1", "/", "2"}]],
+   " \[LongDash] one more correct digit costs a hundred times more samples. \
+", bold["Quasi-Monte Carlo (QMC)"], " keeps the same averaging but replaces \
+the random sample with a deterministic ", ital["low-discrepancy sequence"],
+   " (Sobol\[CloseCurlyQuote], Halton) engineered to fill space evenly. For \
+smooth integrands the error then falls almost as fast as ",
+   bigO[RowBox[{SuperscriptBox["N", RowBox[{"-", "1"}]],
+      SuperscriptBox[RowBox[{"(", "log", " ", "N", ")"}], "d"]}]],
+   " \[LongDash] nearly a full power of ", math["N"], " better."}],
 
-abstractCell[{"Almost every number a Bayesian reports \[LongDash] a \
-posterior mean, a credible interval, a model evidence, a predicted \
-concentration \[LongDash] is an ", bold["integral"], " over the parameter \
-space. The default way to evaluate such integrals is Monte Carlo (MC) \
-averaging, whose error falls only as ",
-   imath@RowBox[{"O", "(", SuperscriptBox["N", RowBox[{"-", "1", "/", "2"}]], ")"}],
-   ": each extra correct digit costs a hundred-fold more samples."}],
+para[{"We test that promise on a genuine inference problem: a \
+six-parameter pharmacokinetic model fit to the classic ",
+   bold["Theophylline"], " data. We build Halton and \
+Sobol\[CloseCurlyQuote] from scratch, set up the posterior, contrast it \
+with classical curve-fitting, and measure the convergence. The headline, \
+on real data: Monte-Carlo slopes near ",
+   imath@RowBox[{"-", "0.5"}], " against Sobol\[CloseCurlyQuote] slopes near \
+", imath@RowBox[{"-", "0.95"}], ", and roughly a 4\[Times]\[Dash]18\[Times] \
+saving in expensive model evaluations."}],
 
-abstractCell[{bold["Quasi-Monte Carlo (QMC)"], " replaces the random \
-sample with a deterministic ", ital["low-discrepancy sequence"],
-   " \[LongDash] Sobol\[CloseCurlyQuote] or Halton points that fill the \
-unit cube far more evenly. For smooth integrands the error then falls \
-almost as fast as ",
-   imath@RowBox[{"O", "(", SuperscriptBox["N", RowBox[{"-", "1"}]],
-      SuperscriptBox[RowBox[{"(", "log", " ", "N", ")"}], "d"], ")"}],
-   " \[LongDash] nearly one full power of ", math["N"], " better."}],
-
-abstractCell[{"We put this to work on a genuine inference problem: a ",
-   bold["two-compartment pharmacokinetic model"], " (six parameters \[Dash] \
-absorption rate, clearance, two volumes, inter-compartmental clearance, \
-residual scatter) fit to the classic ", bold["Theophylline"], " data set. \
-We implement Halton and Sobol\[CloseCurlyQuote] from scratch, build the \
-posterior, and measure the convergence of posterior expectations. The \
-result is the textbook gap, on real data: MC slopes of ",
-   imath@RowBox[{"\[TildeTilde]", RowBox[{"-", "0.5"}]}],
-   " against Sobol\[CloseCurlyQuote] slopes of ",
-   imath@RowBox[{"\[TildeTilde]", RowBox[{"-", "0.95"}]}],
-   ", and an order-of-magnitude reduction in the number of forward-model \
-solves needed for a target accuracy."}],
-
-abstractCell[{ital["Audience:"], " each section opens with the idea in \
-plain terms, then deepens into the equations, the Wolfram Language code, \
-and the measured numbers. Every figure is pre-rendered, so the post reads \
-end-to-end without evaluating anything; every code cell is runnable if you \
-load the attached package."}]
+para[{ital["How to read this:"], " every section opens with the plain idea, \
+then the equations, the runnable Wolfram Language, and the measured \
+numbers. All figures are pre-rendered \[LongDash] the post reads straight \
+through \[LongDash] and every code cell runs if you load the attached \
+package."}]
 }];
 
 
 (* ==================================================================
    SETUP
    ================================================================== *)
-
 writeAll[{
 
-hd1["Setup (optional \[LongDash] only needed if you want to run the code)"],
+section["Setup"],
 
-para[{ital["You can ignore this section entirely if you just want to read \
-the post."], " Every figure is pre-rendered into the notebook as a static \
-image."}],
+para[{ital["Skip this if you only want to read."], " To run the code, put \
+the attached package ", mono["qmc_bayes_helpers.wl"], " next to the \
+notebook and evaluate the three cells below once. They define the \
+generators, the pharmacokinetic model, the data, the priors, and the \
+posterior that every later section reuses."}],
 
-para[{"If you ", ital["do"], " want to run the code, the generators \
-(Halton, Sobol\[CloseCurlyQuote]), the pharmacokinetic model, the priors, \
-the Laplace posterior, and the estimators all live in a single attached \
-package, ", mono["qmc_bayes_helpers.wl"], ". Run the cell below once after \
-opening the notebook."}],
-
-wlIn["(* Put qmc_bayes_helpers.wl in the same folder as this notebook,
-   then shift-Enter. *)
-SetDirectory[NotebookDirectory[]];
+wlIn["SetDirectory[NotebookDirectory[]];
 Get[\"qmc_bayes_helpers.wl\"];"],
 
-para[{"The two cells below define the objects every later section reuses: \
-the prior, the real data, the Bayesian problem, and its Laplace\[Dash]\
-Gaussian posterior. They are spelled out here so that wherever a later \
-cell calls a helper, you can see exactly what was passed in."}],
-
-wlIn["(* Lognormal-prior hyper-parameters for {ka, CL, V1, Q, V2, sigma}:
-   medians and log-scale standard deviations. *)
+wlIn["(* Lognormal-prior medians and log-scale SDs for {ka,CL,V1,Q,V2,sigma} *)
 priorMedians = {1.5, 3.0, 35.0, 2.0, 25.0, 1.0};
 priorLogSD   = {0.6, 0.5, 0.5, 0.7, 0.7, 0.5};
 
-(* The real data: Theophylline Subject 1 (single 320 mg oral dose). *)
+(* Real data: Theophylline Subject 1 (single 320 mg oral dose) *)
 theoph = LoadTheoph[];
-subj1  = SelectSubject[theoph, 1];
+subj1  = SelectSubject[theoph, 1];"],
 
-(* The Bayesian problem and its Laplace-Gaussian posterior. *)
+wlIn["(* The Bayesian problem and its Laplace-Gaussian posterior *)
 pkProblem = BayesProblem[subj1[\"dose\"], subj1[\"t\"], subj1[\"c\"],
    priorMedians, priorLogSD];
 pkLaplace = LaplacePosterior[pkProblem];"]
@@ -197,105 +201,60 @@ pkLaplace = LaplacePosterior[pkProblem];"]
 
 
 (* ==================================================================
-   1.  THE PROBLEM
+   1. THE SQUARE-ROOT WALL
    ================================================================== *)
-
 writeAll[{
 
-hd1["1.  The problem: averaging, and the square-root wall"],
+section["1.  The square-root wall"],
 
-para[{ital["The everyday version."], " Suppose you want the average value \
-of some quantity over a high-dimensional space \[LongDash] say the mean \
-clearance implied by a posterior, or the average rainfall a model \
-predicts. You cannot visit every point, so you sample. The Monte Carlo \
-recipe is the obvious one: throw ", math["N"], " random points, average \
-the values, call it the answer. It always works, in any dimension, with no \
-smoothness assumptions. That universality is why it is everywhere."}],
+para[{"Want the average of something over a space too big to enumerate? \
+Sample it. Throw ", math["N"], " random points, average the values. This \
+Monte-Carlo estimate works in any dimension with no smoothness \
+assumptions \[LongDash] which is why it is everywhere. The price is the \
+error,"}],
 
-para[{ital["The catch."], " The statistical error of an MC average shrinks \
-only as the square root of the sample size,"}],
+displayMath[RowBox[{SubscriptBox["\[Epsilon]", "MC"], "\[Tilde]",
+   FractionBox[RowBox[{"\[Sigma]", "(", "f", ")"}], SqrtBox["N"]], "=",
+   RowBox[{"O", "(", SuperscriptBox["N", RowBox[{"-", "1", "/", "2"}]], ")"}]}]],
 
-displayMath[RowBox[{
-   SubscriptBox["\[Epsilon]", "MC"], "\[Tilde]",
-   FractionBox[RowBox[{"\[Sigma]", "(", "f", ")"}], SqrtBox["N"]],
-   "=", RowBox[{"O", "(", SuperscriptBox["N", RowBox[{"-", "1", "/", "2"}]], ")"}]}]],
+para[{"Halving the error means quadrupling the work; one more decimal digit \
+costs a hundredfold. When each sample is an expensive model solve, that \
+square-root wall is the entire problem. Its cause is visible: random points \
+clump and leave gaps, wasting information. What if we placed them on \
+purpose?"}],
 
-para[{"so cutting the error by ten needs ",
-   imath@RowBox[{"100", "\[Times]"}], " the samples; one more decimal \
-digit costs a factor of a hundred. When each sample is cheap this is \
-merely slow. When each sample requires solving a differential equation, \
-running a climate model, or evaluating an expensive likelihood, the \
-square-root wall is the whole problem."}],
+wlIn["mc  = LDPoints[\"MonteCarlo\", 256, 2];
+hal = LDPoints[\"Halton\", 256, 2];
+sob = LDPoints[\"Sobol\", 256, 2];
+GraphicsRow[ListPlot[#, AspectRatio -> 1, Frame -> True,
+   PlotRange -> {{0, 1}, {0, 1}}, ImageSize -> 230] & /@ {mc, hal, sob}]"],
 
-para[{ital["Why it is square-root."], " MC error is the standard deviation \
-of a sample mean of ", math["N"], " independent draws \[LongDash] pure \
-chance cancellation of ", imath@RowBox[{"\[PlusMinus]"}], " fluctuations. \
-The points know nothing about each other, so they clump and leave gaps \
-(left panel of the next figure). Those gaps are wasted information. The \
-question QMC asks is simple: ", ital["what if we placed the points on \
-purpose, to leave no gaps?"]}]
+imgCell["point_sets.png"],
+caption["Figure 1.  256 points in the unit square. Monte Carlo (left) \
+clumps and leaves holes; Halton (centre) and Sobol\[CloseCurlyQuote] \
+(right) lay down an even, gap-free pattern."]
 }];
 
 
 (* ==================================================================
-   2.  LOW-DISCREPANCY SEQUENCES
+   2. LOW-DISCREPANCY SEQUENCES
    ================================================================== *)
-
 writeAll[{
 
-hd1["2.  Low-discrepancy sequences"],
+section["2.  Low-discrepancy sequences"],
 
-para[{"A ", bold["low-discrepancy sequence"], " is a deterministic set of \
-points engineered to fill ",
-   imath@SuperscriptBox[RowBox[{"[", "0", ",", "1", "]"}], "d"],
-   " as uniformly as possible at every scale. \"Discrepancy\" measures the \
-worst mismatch between the fraction of points inside an axis-aligned box \
-and the box's volume; low discrepancy means every box holds about its fair \
-share. Two classical constructions:"}],
+para[{"A ", bold["low-discrepancy sequence"], " fills the cube as evenly as \
+possible at every scale. ", bold["Halton"], " uses the radical inverse of \
+the index in a different prime base per coordinate; ",
+   bold["Sobol\[CloseCurlyQuote]"], " is a base-2 digital net built from \
+\"direction numbers\" (we use the Joe\[Dash]Kuo tables). Both are a few \
+lines, both are in the attached package. Their ", math["L\:2082"], " ",
+   bold["star discrepancy"], " \[LongDash] the worst box-vs-volume mismatch, \
+by Warnock\[CloseCurlyQuote]s exact formula \[LongDash] decays like ",
+   powN[RowBox[{"-", "1", "/", "2"}]], " for random points but nearly ",
+   powN[RowBox[{"-", "1"}]], " for these sequences:"}],
 
-para[{"\[Bullet] ", bold["Halton"], " (1960). Coordinate ", math["k"], " \
-of the ", math["n"], "-th point is the ", ital["radical inverse"], " of ",
-   math["n"], " in the ", math["k"], "-th prime base \[LongDash] write ",
-   math["n"], " in base ", math["p"], " and reflect its digits about the \
-\"decimal\" point. Different primes per axis keep the coordinates from \
-lining up."}],
-
-para[{"\[Bullet] ", bold["Sobol\[CloseCurlyQuote]"], " (1967). A ", ital["\
-digital (t, m, d)-net"], " in base 2: each coordinate is built from a set \
-of ", ital["direction numbers"], " by XOR-ing those selected by the bits \
-of the index. With the right direction numbers (we use the Joe\[Dash]Kuo \
-tables) Sobol\[CloseCurlyQuote] points are exceptionally uniform in high \
-dimension."}],
-
-para[{"Both are short to implement. The package builds Halton from radical \
-inverses and Sobol\[CloseCurlyQuote] from Joe\[Dash]Kuo direction numbers \
-via the Gray-code/bit-plane construction; here we just ask for the \
-points:"}],
-
-wlIn["(* 256 points of each kind in 2-D. *)
-mc  = LDPoints[\"MonteCarlo\", 256, 2];
-hal = LDPoints[\"Halton\", 256, 2];
-sob = LDPoints[\"Sobol\", 256, 2];
-GraphicsRow[ListPlot[#, AspectRatio -> 1, Frame -> True,
-     PlotRange -> {{0, 1}, {0, 1}}, ImageSize -> 230] & /@ {mc, hal, sob}]"],
-
-imgCell["point_sets.png"],
-captionCell["Figure 2.1  256 points in the unit square. Monte Carlo \
-(left) clumps and leaves holes; Halton (centre) and \
-Sobol\[CloseCurlyQuote] (right) lay down an even, gap-free pattern. The \
-empty patches in the random panel are exactly the wasted samples behind \
-the square-root wall."],
-
-para[{"The uniformity gap is quantitative. The ",
-   imath@SubscriptBox["L", "2"], " ", bold["star discrepancy"], " (computed \
-exactly by Warnock\[CloseCurlyQuote]s formula) decays like ",
-   imath@SuperscriptBox["N", RowBox[{"-", "1", "/", "2"}]],
-   " for random points but nearly ",
-   imath@SuperscriptBox["N", RowBox[{"-", "1"}]],
-   " for the low-discrepancy sets:"}],
-
-wlIn["(* L2 star discrepancy vs N. *)
-Nvals = 2^Range[4, 12];
+wlIn["Nvals = 2^Range[4, 12];
 dMC  = Mean[Table[StarDiscrepancyL2[
      RandomizedLDPoints[\"MonteCarlo\", #, 2, 100 r + #]], {r, 20}]] & /@ Nvals;
 dHal = StarDiscrepancyL2[LDPoints[\"Halton\", #, 2]] & /@ Nvals;
@@ -304,538 +263,554 @@ ListLogLogPlot[{Transpose[{Nvals, dMC}], Transpose[{Nvals, dHal}],
    Transpose[{Nvals, dSob}]}, Joined -> True, Mesh -> All]"],
 
 imgCell["discrepancy.png"],
-captionCell["Figure 2.2  ", math["L\:2082"], " star discrepancy of the \
-three point sets versus ", math["N"], " (log-log). Monte Carlo sits on the \
-", powN[RowBox[{"-", "1", "/", "2"}]], " line; Halton and \
-Sobol\[CloseCurlyQuote] track ", powN[RowBox[{"-", "1"}]],
-   ". This is the geometric root of the whole \
-convergence story \[LongDash] more uniform points integrate smooth \
-functions more accurately."],
+caption["Figure 2.  ", math["L\:2082"], " star discrepancy versus ",
+   math["N"], " (log-log). Monte Carlo rides the ", math["N\^(-1/2)"],
+   " line; Halton and Sobol\[CloseCurlyQuote] track ", math["N\^(-1)"], "."],
 
-para[{ital["The theorem behind it."], " For a function ", math["f"], " of \
-bounded variation ", imath@RowBox[{"V", "(", "f", ")"}],
-   " (in the Hardy\[Dash]Krause sense), the ",
-   bold["Koksma\[Dash]Hlawka inequality"], " bounds the QMC error by the \
-product of the function's variation and the points' discrepancy:"}],
+para[{ital["The theorem behind it."], " For an integrand ", math["f"], " of \
+bounded variation ", imath@RowBox[{"V", "(", "f", ")"}], " (Hardy\[Dash]\
+Krause), the ", bold["Koksma\[Dash]Hlawka inequality"], " splits the QMC \
+error into the function\[CloseCurlyQuote]s variation times the \
+points\[CloseCurlyQuote] discrepancy:"}],
 
-displayMath[RowBox[{
-   "\[LeftBracketingBar]",
-   RowBox[{
-     RowBox[{FractionBox["1", "N"],
+displayMath[RowBox[{"\[LeftBracketingBar]",
+   RowBox[{RowBox[{FractionBox["1", "N"],
        UnderoverscriptBox["\[Sum]", RowBox[{"n", "=", "1"}], "N"],
        RowBox[{"f", "(", SubscriptBox["x", "n"], ")"}]}], "-",
-     RowBox[{"\[Integral]", RowBox[{"f", "(", "x", ")"}], RowBox[{"\[DifferentialD]", "x"}]}]}],
-   "\[RightBracketingBar]",
-   "\[LessEqual]",
-   RowBox[{"V", "(", "f", ")"}], " ",
-   SubsuperscriptBox["D", "N", "*"]}]],
+     RowBox[{"\[Integral]", RowBox[{"f", "(", "x", ")"}],
+       RowBox[{"\[DifferentialD]", "x"}]}]}],
+   "\[RightBracketingBar]", "\[LessEqual]",
+   RowBox[{"V", "(", "f", ")"}], " ", SubsuperscriptBox["D", "N", "*"]}]],
 
-para[{"With ",
-   imath@RowBox[{SubsuperscriptBox["D", "N", "*"], "=",
+para[{"With ", imath@RowBox[{SubsuperscriptBox["D", "N", "*"], "=",
      RowBox[{"O", "(", SuperscriptBox["N", RowBox[{"-", "1"}]],
        SuperscriptBox[RowBox[{"(", "log", " ", "N", ")"}], "d"], ")"}]}],
-   " for these sequences, the QMC error inherits that rate \[LongDash] ",
-   ital["provided"], " the integrand is smooth enough to have finite \
-variation. That proviso is the entire art of applying QMC, and it drives \
-every modelling choice in the rest of this post."}]
+   ", QMC inherits that rate \[LongDash] ", ital["provided"], " the \
+integrand is smooth enough to have finite variation. That proviso drives \
+every modelling choice below."}]
 }];
 
 
 (* ==================================================================
-   3.  A REAL BAYESIAN PROBLEM
+   3. THE MODEL WE FIT
    ================================================================== *)
-
 writeAll[{
 
-hd1["3.  A real Bayesian problem: pharmacokinetics"],
+section["3.  The model: a drug moving through the body"],
 
-para[{ital["The setting."], " Pharmacokinetics (PK) asks what the body \
-does to a drug: how fast it is absorbed, distributed, and cleared. It is \
-the quantitative backbone of dosing. A patient swallows a dose; the drug \
-concentration in blood is measured at a handful of times; from those few \
-points we must infer the underlying rate constants \[LongDash] and, just \
-as importantly, our ", ital["uncertainty"], " about them, because dosing \
-decisions ride on it. That is a Bayesian problem."}],
+para[{ital["What happens when you take a pill."], " The drug dissolves in \
+the gut and is absorbed into the bloodstream; the blood carries it to the \
+tissues, where some of it parks reversibly; meanwhile the liver and kidneys \
+clear it away. Plot the blood concentration against time and you get a \
+familiar shape: a fast rise to a peak, then a slow decline. ",
+   bold["Pharmacokinetics"], " is the quantitative description of that \
+curve, and it is the backbone of every dosing decision \[LongDash] how \
+much, how often, and how confident we are."}],
 
-para[{"We use the canonical teaching data set: ", bold["Theophylline"],
-   ", an anti-asthma drug, from Boeckmann, Sheiner & Beal \[LongDash] 12 \
-subjects, each given a single oral dose, with serum concentration sampled \
-11 times over about 25 hours. It ships with R\[CloseCurlyQuote]s ",
-   mono["datasets"], " package; we pull it live and commit a tidy copy."}],
+para[{"We use the canonical teaching data set, ", bold["Theophylline"],
+   " (an anti-asthma drug, from Boeckmann, Sheiner & Beal): 12 subjects, \
+each a single oral dose, serum concentration sampled 11 times over ~25 h. \
+Theophylline has a narrow therapeutic window (about 10\[Dash]20 mg/L; \
+toxicity climbs above it), so getting the curve \[LongDash] and its \
+uncertainty \[LongDash] right genuinely matters."}],
 
-wlIn["(* The data are loaded in Setup as `theoph`; here is Subject 1. *)
-subj1 = SelectSubject[theoph, 1];
-{subj1[\"dose\"], Transpose[{subj1[\"t\"], subj1[\"c\"]}]}"],
+subsec["3.1  The two-compartment system"],
 
-para[{ital["The forward model."], " A ", bold["two-compartment model with \
-first-order absorption"], " is the standard structural model. The drug \
-enters a gut depot, is absorbed into a central (blood) compartment at rate \
-", sub["k", "a"], ", distributes reversibly into a peripheral (tissue) \
-compartment, and is cleared from the centre. With six parameters \
-\[LongDash] absorption rate ", sub["k", "a"], ", clearance ", math["CL"],
-   ", central volume ", sub["V", "1"], ", inter-compartmental clearance ",
-   math["Q"], ", peripheral volume ", sub["V", "2"], ", and a residual \
-scatter ", math["\[Sigma]"], " \[LongDash] the concentration after a dose \
-", math["D"], " has the closed form (a sum of three exponentials), so no \
-ODE solver is needed:"}],
+para[{"The standard structural model splits the body into two \
+well-mixed ", ital["compartments"], ": a ", bold["central"], " one (blood \
+and richly-perfused organs, volume ", sub["V", "1"], ") where we actually \
+measure concentration, and a ", bold["peripheral"], " one (slower tissues, \
+volume ", sub["V", "2"], "). The swallowed dose sits in a gut depot ",
+   sub["A", "g"], " and is absorbed first-order into the central \
+compartment; drug shuttles between central and peripheral, and is cleared \
+from the central compartment. Writing the amounts in each compartment, the \
+dynamics are a linear system of ODEs:"}],
 
-displayMath[RowBox[{
-   RowBox[{"C", "(", "t", ")"}], "=",
+displayMath[RowBox[{FractionBox[RowBox[{"\[DifferentialD]", SubscriptBox["A", "g"]}], RowBox[{"\[DifferentialD]", "t"}]],
+   "=", RowBox[{RowBox[{"-", SubscriptBox["k", "a"]}], " ", SubscriptBox["A", "g"]}]}]],
+displayMath[RowBox[{FractionBox[RowBox[{"\[DifferentialD]", SubscriptBox["A", "1"]}], RowBox[{"\[DifferentialD]", "t"}]],
+   "=", RowBox[{
+     RowBox[{SubscriptBox["k", "a"], " ", SubscriptBox["A", "g"]}], "-",
+     RowBox[{FractionBox["CL", SubscriptBox["V", "1"]], " ", SubscriptBox["A", "1"]}], "-",
+     RowBox[{FractionBox["Q", SubscriptBox["V", "1"]], " ", SubscriptBox["A", "1"]}], "+",
+     RowBox[{FractionBox["Q", SubscriptBox["V", "2"]], " ", SubscriptBox["A", "2"]}]}]}]],
+displayMath[RowBox[{FractionBox[RowBox[{"\[DifferentialD]", SubscriptBox["A", "2"]}], RowBox[{"\[DifferentialD]", "t"}]],
+   "=", RowBox[{
+     RowBox[{FractionBox["Q", SubscriptBox["V", "1"]], " ", SubscriptBox["A", "1"]}], "-",
+     RowBox[{FractionBox["Q", SubscriptBox["V", "2"]], " ", SubscriptBox["A", "2"]}]}]}]],
+
+para[{"with the oral dose as initial condition ",
+   imath@RowBox[{SubscriptBox["A", "g"], "(", "0", ")", "=", "D"}],
+   ", ", imath@RowBox[{SubscriptBox["A", "1"], "(", "0", ")", "=",
+     RowBox[{SubscriptBox["A", "2"], "(", "0", ")"}], "=", "0"}],
+   ", and the measured concentration ",
+   imath@RowBox[{"C", "(", "t", ")", "=",
+     RowBox[{SubscriptBox["A", "1"], "/", SubscriptBox["V", "1"]}]}], "."}],
+
+subsec["3.2  The six parameters, one by one"],
+
+para[{"These are the unknowns we infer \[LongDash] each a physical \
+quantity a clinician can interpret:"}],
+
+item[{mono["ka"], " \[LongDash] ", bold["absorption rate"], " (1/h). How \
+fast the drug leaves the gut for the blood; it sets the steepness of the \
+rising limb and the time-to-peak."}],
+item[{mono["CL"], " \[LongDash] ", bold["clearance"], " (L/h). Volume of \
+blood completely cleared of drug per hour. It alone fixes the total \
+exposure ", imath@RowBox[{"AUC", "=", RowBox[{"D", "/", "CL"}]}],
+   " \[LongDash] the single most important dosing parameter."}],
+item[{mono["V1"], " \[LongDash] ", bold["central volume"], " (L). Relates \
+dose to the initial concentration; small ", sub["V", "1"],
+   " means a high peak."}],
+item[{mono["Q"], " \[LongDash] ", bold["inter-compartmental clearance"],
+   " (L/h). How fast drug exchanges with the tissues; it shapes the bend \
+between the fast and slow phases."}],
+item[{mono["V2"], " \[LongDash] ", bold["peripheral volume"], " (L). How \
+much drug the tissues hold; it stretches the slow elimination tail."}],
+item[{mono["\[Sigma]"], " \[LongDash] ", bold["residual scatter"], " \
+(mg/L). The combined assay-plus-model noise on each measurement \[LongDash] \
+itself an unknown to be estimated."}],
+
+para[{"From these follow the quantities dosing actually turns on: \
+half-life ", imath@RowBox[{SubscriptBox["t", RowBox[{"1", "/", "2"}]], "\[Proportional]",
+     RowBox[{SubscriptBox["V", "1"], "/", "CL"}]}],
+   ", exposure ", imath@RowBox[{"D", "/", "CL"}], ", peak concentration, and \
+the steady state reached under repeated dosing."}],
+
+subsec["3.3  A closed form \[LongDash] no solver needed"],
+
+para[{"Because the system is linear, it has an exact solution: a sum of \
+three exponentials in the macro-rate constants ", math["\[Alpha]"], ", ",
+   math["\[Beta]"], " (the eigenvalues of the compartment matrix) and ",
+   sub["k", "a"], ". This makes each likelihood evaluation a handful of ",
+   mono["Exp"], "s rather than an ODE solve:"}],
+
+displayMath[RowBox[{RowBox[{"C", "(", "t", ")"}], "=",
    FractionBox[RowBox[{SubscriptBox["k", "a"], " ", "D"}], SubscriptBox["V", "1"]],
    RowBox[{"(",
-     RowBox[{
-       RowBox[{SubscriptBox["A", "\[Alpha]"], SuperscriptBox["e", RowBox[{"-", "\[Alpha]", " ", "t"}]]}], "+",
+     RowBox[{RowBox[{SubscriptBox["A", "\[Alpha]"], SuperscriptBox["e", RowBox[{"-", "\[Alpha]", " ", "t"}]]}], "+",
        RowBox[{SubscriptBox["A", "\[Beta]"], SuperscriptBox["e", RowBox[{"-", "\[Beta]", " ", "t"}]]}], "+",
        RowBox[{SubscriptBox["A", "k"], SuperscriptBox["e", RowBox[{"-", SubscriptBox["k", "a"], " ", "t"}]]}]}],
    ")"}]}]],
 
-para[{"where ", math["\[Alpha]"], " and ", math["\[Beta]"], " are the \
-macro-rate constants (eigenvalues of the linear compartment system) and \
-the ", math["A"], "-coefficients are fixed by them. The package evaluates \
-this directly:"}],
-
-wlIn["(* Concentration over 0-25 h at typical parameters, 320 mg dose. *)
+wlIn["(* The closed-form concentration; ka, CL, V1, Q, V2, dose. *)
 Plot[PKConcentration[t, {1.5, 2.8, 30., 2.0, 20.}, 320.], {t, 0, 25},
-   Frame -> True, FrameLabel -> {\"time (h)\", \"conc (mg/L)\"}]"],
+   Frame -> True, FrameLabel -> {\"time (h)\", \"conc (mg/L)\"},
+   PlotStyle -> RGBColor[0.153, 0.51, 0.64]]"],
 
-para[{ital["The statistical model and priors."], " Each measurement is \
-the model prediction plus Gaussian scatter, ",
+callout[bold["Why bother with six parameters? "],
+   "A simpler one-compartment model has three. The second compartment is \
+what lets the curve bend \[LongDash] a fast distribution phase then a slow \
+elimination phase \[LongDash] which real drugs do. The cost is that the two \
+tissue parameters (", mono["Q"], ", ", mono["V2"], ") are only weakly \
+pinned down by a single subject\[CloseCurlyQuote]s sparse samples. Holding \
+honest uncertainty about them, rather than a false-precision point \
+estimate, is exactly where the Bayesian treatment earns its keep."]
+}];
+
+
+(* ==================================================================
+   4. THE BAYESIAN MODEL
+   ================================================================== *)
+writeAll[{
+
+section["4.  The Bayesian model, and why it is all integrals"],
+
+para[{"Each measurement is the model prediction plus Gaussian scatter, ",
    imath@RowBox[{SubscriptBox["c", "i"], "=",
-     RowBox[{RowBox[{"C", "(", SubscriptBox["t", "i"], ")"}], "+",
-       SubscriptBox["\[Epsilon]", "i"]}]}],
-   " with ",
-   imath@RowBox[{SubscriptBox["\[Epsilon]", "i"], "\[Tilde]",
+     RowBox[{RowBox[{"C", "(", SubscriptBox["t", "i"], ")"}], "+", SubscriptBox["\[Epsilon]", "i"]}]}],
+   " with ", imath@RowBox[{SubscriptBox["\[Epsilon]", "i"], "\[Tilde]",
      RowBox[{"N", "(", "0", ",", SuperscriptBox["\[Sigma]", "2"], ")"}]}],
-   ". All six parameters are positive, so we put independent ",
-   bold["lognormal"], " priors on them \[LongDash] equivalently, normal \
-priors on the logs. The posterior is then"}],
+   ". All six parameters are positive, so each gets a ", bold["lognormal"],
+   " prior (a normal prior on its logarithm). Bayes\[CloseCurlyQuote] rule \
+gives the posterior:"}],
 
-displayMath[RowBox[{
-   RowBox[{"p", "(", "\[Theta]", "\[VerticalSeparator]", "c", ")"}],
+displayMath[RowBox[{RowBox[{"p", "(", "\[Theta]", "\[VerticalSeparator]", "c", ")"}],
    "\[Proportional]",
    RowBox[{UnderoverscriptBox["\[Product]", RowBox[{"i", "=", "1"}], "n"],
-     RowBox[{"N", "(",
-       RowBox[{SubscriptBox["c", "i"], "\[VerticalSeparator]",
-         RowBox[{"C", "(", SubscriptBox["t", "i"], ")"}], ",",
-         SuperscriptBox["\[Sigma]", "2"]}], ")"}]}], " ",
-   RowBox[{"\[Pi]", "(", "\[Theta]", ")"}]}]],
+     RowBox[{"N", "(", RowBox[{SubscriptBox["c", "i"], "\[VerticalSeparator]",
+       RowBox[{"C", "(", SubscriptBox["t", "i"], ")"}], ",", SuperscriptBox["\[Sigma]", "2"]}], ")"}]}],
+   " ", RowBox[{"\[Pi]", "(", "\[Theta]", ")"}]}]],
 
-para[{ital["What we actually want are integrals."], " Every Bayesian \
-deliverable is an expectation against this posterior \[LongDash] the mean \
-clearance, the variance, the probability the half-life exceeds a \
-threshold, the predicted concentration at the next sampling time:"}],
+para[{"Now the key point. Everything we want from this posterior is an ",
+   bold["expectation"], " \[LongDash] an integral over the six-dimensional \
+parameter space:"}],
 
-displayMath[RowBox[{
-   RowBox[{SubscriptBox["E", "post"], "[", RowBox[{"g", "(", "\[Theta]", ")"}], "]"}],
+displayMath[RowBox[{RowBox[{SubscriptBox["E", "post"], "[", RowBox[{"g", "(", "\[Theta]", ")"}], "]"}],
    "=", RowBox[{"\[Integral]", RowBox[{"g", "(", "\[Theta]", ")"}], " ",
      RowBox[{"p", "(", "\[Theta]", "\[VerticalSeparator]", "c", ")"}],
      RowBox[{"\[DifferentialD]", "\[Theta]"}]}]}]],
 
-para[{"These are six-dimensional integrals over a smooth (but not \
-analytically integrable) density. That is precisely the QMC use case \
-\[LongDash] moderate dimension, smooth integrand, and an evaluation cost \
-that, in real PK/PD work with stiff ODE models, is the binding \
-constraint."}]
+para[{"Posterior mean clearance? Take ", imath@RowBox[{"g", "=", "CL"}],
+   ". Its uncertainty? ", imath@RowBox[{"g", "=", SuperscriptBox["CL", "2"]}],
+   ". Probability the half-life exceeds a threshold? ", math["g"],
+   " an indicator. The predicted concentration at the next clinic visit? ",
+   imath@RowBox[{"g", "=", RowBox[{"C", "(", SubscriptBox["t", "*"], ")"}]}],
+   ". Six-dimensional integrals of a smooth density, with no closed form: \
+the exact setting where the choice of integration rule \[LongDash] \
+Monte-Carlo or quasi-Monte-Carlo \[LongDash] decides the cost."}]
 }];
 
 
 (* ==================================================================
-   4.  THE FIT
+   5. CLASSICAL vs BAYESIAN
    ================================================================== *)
-
 writeAll[{
 
-hd1["4.  The fit: posterior of a Theophylline subject"],
+section["5.  Classical curve-fitting versus the Bayesian posterior"],
 
-para[{ital["From posterior to a tractable integral."], " To turn ",
-   imath@SubscriptBox["E", "post"], " into something a low-discrepancy \
-sequence can evaluate, we change variables so the integration domain is \
-the unit cube. The clean, standard device is the ", bold["Laplace (\
-Gaussian) approximation"], ": find the posterior mode in log-parameter \
-space and the curvature (Hessian) there, giving a multivariate normal ",
-   imath@RowBox[{"N", "(", "\[Mu]", ",", "\[CapitalSigma]", ")"}],
-   " on ", imath@RowBox[{"\[CurlyPhi]", "=", RowBox[{"log", " ", "\[Theta]"}]}],
-   ". A posterior expectation is then a Gaussian integral, and the ",
-   bold["inverse-CDF transform"],
-   " maps the unit cube onto it: ",
-   imath@RowBox[{"\[CurlyPhi]", "(", "u", ")", "=",
+para[{ital["The classical reflex."], " Hand this data to a statistician and \
+the first move is ", bold["nonlinear least squares"], " \[LongDash] in \
+Wolfram Language, ", mono["NonlinearModelFit"], " \[LongDash] which slides \
+the six parameters until the squared residuals are smallest. It is fast and \
+gives a tidy best-fit curve:"}],
+
+wlIn["model = PKConcentration[t, {ka, CL, V1, Q, V2}, subj1[\"dose\"]];
+nlm = NonlinearModelFit[Transpose[{subj1[\"t\"], subj1[\"c\"]}], model,
+   {{ka, 1.5}, {CL, 2.8}, {V1, 30}, {Q, 2.0}, {V2, 20}}, t];
+{nlm[\"BestFitParameters\"], nlm[\"ParameterErrors\"]}"],
+
+para[{ital["And the trouble it hides."], " The point estimate is \
+fine, but ask for its error bars and the asymptotic standard errors come \
+back enormous \[LongDash] of order ",
+   imath@SuperscriptBox["10", "6"], "\[Dash]", imath@SuperscriptBox["10", "7"],
+   " on ", math["CL"], ", ", sub["V", "1"], ", ", sub["V", "2"],
+   ", with ", sub["V", "2"], " driven to essentially zero. The reason is \
+real: a two-compartment model is ", bold["not identifiable"], " from one \
+subject\[CloseCurlyQuote]s eleven points, so the least-squares surface is \
+nearly flat in some directions and the linearized covariance blows up. \
+Classical fitting gives you a curve but no trustworthy uncertainty."}],
+
+imgCell["classical.png"],
+caption["Figure 3.  Same data, two philosophies. ", bold["Left:"], " \
+least squares returns a single best-fit curve \[LongDash] and, because the \
+model is unidentifiable here, no usable error band. ", bold["Right:"], " \
+the Bayesian posterior (sampled by QMC) delivers a full predictive band; \
+the lognormal priors gently regularize the directions the data \
+cannot constrain."],
+
+para[{"The Bayesian posterior fixes this honestly: the priors keep the \
+weakly-identified directions finite, and the answer is a full joint \
+distribution \[LongDash] every parameter, every prediction, with calibrated \
+uncertainty. The catch is the one from \[Section]4: you must integrate. The \
+options:"}],
+
+item[{bold["Grid quadrature"], " \[LongDash] exact-ish in 1\[Dash]2 \
+dimensions, hopeless in six (", imath@RowBox[{"10", " ", "points", "/",
+     "dim"}], " is ", imath@SuperscriptBox["10", "6"], " evaluations, and \
+the accuracy is still poor)."}],
+item[{bold["Markov-chain Monte Carlo (MCMC)"], " \[LongDash] the standard \
+Bayesian workhorse; it samples the posterior directly but inherits the ",
+   powN[RowBox[{"-", "1", "/", "2"}]], " Monte-Carlo rate (worse, after \
+autocorrelation) and needs tuning and convergence checks."}],
+item[{bold["Laplace approximation"], " \[LongDash] fit a Gaussian at the \
+posterior mode; cheap, and the basis we build on here."}],
+item[{bold["Quasi-Monte Carlo"], " \[LongDash] deterministic \
+low-discrepancy points, near ", powN[RowBox[{"-", "1"}]],
+   " for smooth integrands. For moderate-dimensional, smooth posteriors it \
+is the most evaluations-efficient of the lot \[LongDash] and it is a \
+drop-in replacement for the random draws."}],
+
+para[{"QMC does not compete with MCMC so much as complement it: where you \
+can reparameterize the posterior to be smooth and roughly Gaussian \
+(Bayesian asymptotics says you usually can), QMC integration buys back most \
+of the lost power. That is the recipe we follow next."}]
+}];
+
+
+(* ==================================================================
+   6. THE FIT
+   ================================================================== *)
+writeAll[{
+
+section["6.  The fit"],
+
+para[{ital["From posterior to a unit-cube integral."], " We build the ",
+   bold["Laplace\[Dash]Gaussian"], " approximation \[LongDash] posterior \
+mode plus curvature in log-parameter space, a multivariate normal ",
+   imath@RowBox[{"N", "(", "\[Mu]", ",", "\[CapitalSigma]", ")"}], " on ",
+   imath@RowBox[{"\[CurlyPhi]", "=", RowBox[{"log", " ", "\[Theta]"}]}],
+   " \[LongDash] and map the unit cube onto it with the inverse-CDF \
+transform ", imath@RowBox[{"\[CurlyPhi]", "(", "u", ")", "=",
      RowBox[{"\[Mu]", "+", RowBox[{"L", " ",
        SuperscriptBox["\[CapitalPhi]", RowBox[{"-", "1"}]], "(", "u", ")"}]}]}],
-   " with ", imath@RowBox[{"L", " ", SuperscriptBox["L", "T"], "=", "\[CapitalSigma]"}],
-   " and ", imath@SuperscriptBox["\[CapitalPhi]", RowBox[{"-", "1"}]],
-   " the normal quantile applied coordinate-wise. No importance weights, a \
-genuinely smooth integrand \[LongDash] exactly the regime where the \
-Koksma\[Dash]Hlawka bound bites."}],
+   ", ", imath@RowBox[{"L", SuperscriptBox["L", "T"], "=", "\[CapitalSigma]"}],
+   ". A posterior expectation becomes an integral over ",
+   imath@SuperscriptBox[RowBox[{"[", "0", ",", "1", "]"}], "6"],
+   " of a smooth, weight-free integrand \[LongDash] ready for QMC."}],
 
-wlIn["(* The Laplace-Gaussian posterior (built in Setup as pkLaplace).
-   Draw from it with a Sobol' point set and form the posterior-predictive
-   concentration band. *)
+wlIn["(* Draw from the posterior with a Sobol' set; form the predictive band *)
 draws  = PosteriorDraws[LDPoints[\"Sobol\", 4096, 6], pkLaplace];
 tGrid  = Subdivide[0., 25., 200];
 curves = ConcentrationCurves[draws, tGrid, subj1[\"dose\"]];
 band   = Transpose[curves];
-{Quantile[#, 0.05] & /@ band, Quantile[#, 0.95] & /@ band};   (* 90% band *)"],
+{Quantile[#, 0.05] & /@ band, Quantile[#, 0.95] & /@ band};"],
 
 imgCell["pk_fit.png"],
-captionCell["Figure 4.1  Theophylline Subject 1: the 11 measurements \
-(points) with the 90% posterior-predictive concentration band from the \
-fitted two-compartment model. The model captures the absorption peak near \
-2 h and the slow elimination tail; the data fall inside the band."],
-
-para[{"The posterior marginals (a Sobol\[CloseCurlyQuote] draw from the \
-Laplace posterior) show what the 11 points do and do not pin down:"}],
+caption["Figure 4.  Theophylline Subject 1: the 11 measurements with the \
+90% posterior-predictive band. The fit captures the absorption peak near \
+2 h and the slow elimination tail."],
 
 imgCell["posterior.png"],
-captionCell["Figure 4.2  Posterior marginals for the six parameters. \
-Clearance ", math["CL"], ", central volume ", sub["V", "1"], ", and \
-absorption ", sub["k", "a"], " are tightly determined; the \
-inter-compartmental terms ", math["Q"], " and ", sub["V", "2"], " are \
-much broader \[LongDash] a single subject\[CloseCurlyQuote]s data only \
-weakly identify the peripheral compartment. That mix of well- and \
-weakly-constrained parameters is typical of real inference."],
+caption["Figure 5.  Posterior marginals. Clearance ", math["CL"],
+   ", central volume ", sub["V", "1"], ", and absorption ", sub["k", "a"],
+   " are tightly determined; ", math["Q"], " and ", sub["V", "2"],
+   " stay broad \[LongDash] honest uncertainty where the data are thin."],
 
-calloutCell[{bold["Honest check: is the Gaussian posterior good enough? "],
-   "The Laplace approximation is exact only for Gaussian posteriors. We \
-verify it against the ", ital["full"], " posterior computed by \
-self-normalized importance sampling (the package\[CloseCurlyQuote]s ",
-   mono["FitProposal"], " + ", mono["ImportanceEstimate"], "). The \
-well-identified parameters (", math["CL"], ", ", sub["V", "1"], ", ",
-   sub["k", "a"], ") agree to within about 10%; the weakly-identified ",
-   math["Q"], ", ", sub["V", "2"], " differ more, because their true \
-posterior is skewed. The convergence demonstration below does not depend \
-on the approximation being perfect \[LongDash] it only needs the \
-integrand we actually integrate to be smooth, which it is."}],
-
-wlIn["(* Cross-check: full posterior mean via importance sampling. *)
-estIS = ImportanceEstimate[LDPoints[\"Sobol\", 2^16, 6],
-   FitProposal[pkProblem], pkProblem];
-{LaplaceMeanExact[pkLaplace], estIS[\"postMean\"], estIS[\"essFraction\"]}"]
+callout[bold["Is the Gaussian approximation good enough? "],
+   "We check against the full posterior via importance sampling (",
+   mono["FitProposal"], " + ", mono["ImportanceEstimate"], "): the \
+well-identified parameters agree to ~10%. And the convergence demonstration \
+does not depend on the approximation being perfect \[LongDash] only on the \
+integrand we actually integrate being smooth, which it is."]
 }];
 
 
 (* ==================================================================
-   5.  THE CONVERGENCE LAW
+   7. THE CONVERGENCE LAW
    ================================================================== *)
-
 writeAll[{
 
-hd1["5.  The convergence law (the headline)"],
+section["7.  The convergence law"],
 
-para[{"Now the measurement. We estimate two posterior expectations of the \
-real fit and watch the error fall as the number of points grows, for \
-Monte Carlo, Sobol\[CloseCurlyQuote], and Halton:"}],
-
-para[{"\[Bullet] ", bold["the posterior mean clearance"], " ",
+para[{"Now the measurement. We estimate two posterior expectations and \
+watch the error fall with the number of points, for Monte Carlo, \
+Sobol\[CloseCurlyQuote], and Halton: the ", bold["mean clearance"], " ",
    imath@RowBox[{SubscriptBox["E", "post"], "[", "CL", "]"}],
-   ". Under the Gaussian posterior this has a closed form, ",
-   imath@RowBox[{"exp", "(",
-     RowBox[{SubscriptBox["\[Mu]", "CL"], "+",
-       RowBox[{SubscriptBox["\[CapitalSigma]", "CL"], "/", "2"}]}], ")"}],
-   ", so we know the exact answer and can measure true error."}],
+   " (which has an analytic value under the Gaussian posterior, so we know \
+the truth exactly) and the ", bold["predicted concentration at 6 h"],
+   " (no closed form \[LongDash] each evaluation a model solve). Errors are \
+averaged over independent randomizations (a digital shift for \
+Sobol\[CloseCurlyQuote], a Cranley\[Dash]Patterson rotation for Halton):"}],
 
-para[{"\[Bullet] ", bold["the posterior-predictive concentration at 6 h"],
-   ", ", imath@RowBox[{SubscriptBox["E", "post"],
-     "[", RowBox[{"C", "(", "6", ")"}], "]"}],
-   ", which has no closed form \[LongDash] each integrand evaluation is a \
-forward model solve, so this is the realistic, expensive case. Its \
-reference value comes from a high-", math["N"], " Sobol\[CloseCurlyQuote] \
-run."}],
-
-para[{"For each method and each ", math["N"], " we average over \
-independent randomizations (a digital shift for Sobol\[CloseCurlyQuote], a \
-Cranley\[Dash]Patterson rotation for Halton, reseeding for MC) and report \
-the root-mean-square error:"}],
-
-wlIn["(* RMSE vs N for E[CL], analytic reference. *)
-Nlist = 2^Range[7, 15];
-refCL = LaplaceMeanExact[pkLaplace][[2]];
-gCL   = #[[All, 2]] &;                       (* CL is parameter 2 *)
+wlIn["Nlist = 2^Range[7, 15];
+refCL = LaplaceMeanExact[pkLaplace][[2]];          (* exact E[CL] *)
+gCL   = #[[All, 2]] &;
 rmseCL = Association[# -> ExpectationRMSE[#, Nlist, 200, pkLaplace, gCL, refCL] & /@
    {\"MonteCarlo\", \"Sobol\", \"Halton\"}];
 ListLogLogPlot[Table[Transpose[{Nlist, rmseCL[m]}],
    {m, {\"MonteCarlo\", \"Sobol\", \"Halton\"}}], Joined -> True, Mesh -> All]"],
 
 imgCell["convergence.png"],
-captionCell["Figure 5.1  RMSE versus ", math["N"], " (log-log) for two \
-posterior expectations of the real Theophylline fit. ",
-   bold["Left:"], " posterior mean clearance (analytic reference). ",
-   bold["Right:"], " posterior-predictive concentration at 6 h (each \
-evaluation a forward model solve). Monte Carlo follows the ",
-   powN[RowBox[{"-", "1", "/", "2"}]], " guide (slope \[TildeTilde] ",
-   math["-0.50"], "); Sobol\[CloseCurlyQuote] and Halton follow ",
-   powN[RowBox[{"-", "1"}]], " (slopes \[TildeTilde] ", math["-0.95"],
-   "). At ", math["N = 32768"], " Sobol\[CloseCurlyQuote] is roughly 50\
-\[Times] more accurate than MC, and the gap widens with ", math["N"], "."],
+caption["Figure 6.  RMSE versus ", math["N"], " (log-log). ", bold["Left:"],
+   " posterior mean clearance (analytic reference). ", bold["Right:"],
+   " posterior-predictive concentration at 6 h. Monte Carlo follows ",
+   math["N\^(-1/2)"], " (slope \[TildeTilde] ", math["-0.50"],
+   "); Sobol\[CloseCurlyQuote] and Halton follow ", math["N\^(-1)"],
+   " (slopes \[TildeTilde] ", math["-0.95"], "). At ", math["N = 32768"],
+   " Sobol\[CloseCurlyQuote] is ~50\[Times] more accurate, and the gap keeps \
+widening."],
 
-para[{"That is the headline result of the project, and it is on real data: \
-the same number of model evaluations buys you almost twice as many correct \
-digits with Sobol\[CloseCurlyQuote] as with Monte Carlo. The Halton curve \
-sits just above Sobol\[CloseCurlyQuote] \[LongDash] both achieve the \
-near-", imath@SuperscriptBox["N", RowBox[{"-", "1"}]], " rate, with \
-Sobol\[CloseCurlyQuote] the more uniform in six dimensions."}]
+para[{"That is the headline, on real data: the same number of model solves \
+buys nearly twice the correct digits with Sobol\[CloseCurlyQuote] as with \
+Monte Carlo."}]
 }];
 
 
 (* ==================================================================
-   6.  DIMENSION DEPENDENCE
+   8. DIMENSION
    ================================================================== *)
-
 writeAll[{
 
-hd1["6.  Dimension dependence: why the advantage erodes"],
+section["8.  Why dimension matters"],
 
-para[{"The QMC rate carries a ",
-   imath@SuperscriptBox[RowBox[{"(", "log", " ", "N", ")"}], "d"],
-   " factor, and that factor is not cosmetic: as the dimension ", math["d"],
-   " grows, the advantage over Monte Carlo erodes, because filling a \
-high-dimensional cube evenly gets exponentially harder. The cleanest way \
-to see it is to fix the sampling budget ", math["N"], " and ask how many \
-times more accurate Sobol\[CloseCurlyQuote] is than MC \[LongDash] the ",
-   ital["efficiency gain"], " \[LongDash] as the dimension climbs. We use a \
-smooth product integrand with exact integral 1:"}],
+para[{"The ", imath@SuperscriptBox[RowBox[{"(", "log", " ", "N", ")"}], "d"],
+   " factor is not cosmetic: filling a cube evenly gets exponentially harder \
+as the dimension grows, so the QMC advantage erodes. Fix the budget ",
+   math["N"], " and measure how many times more accurate \
+Sobol\[CloseCurlyQuote] is than MC on a smooth test integral, across \
+dimension:"}],
 
-wlIn["(* Smooth product integrand, exact integral = 1. Efficiency gain
-   (MC RMSE / Sobol' RMSE) at fixed budget N, across dimension d. *)
-cAmp  = 0.6;
-fMean = Function[pts, Mean[Times @@@ (1 + cAmp Cos[2 Pi pts])]];
-rmseAt[method_, d_, n_] := Sqrt@Mean@Table[
-   (fMean[RandomizedLDPoints[method, n, d, 53 r + d]] - 1.)^2, {r, 120}];
+wlIn["cAmp  = 0.6;
+fMean = Function[pts, Mean[Times @@@ (1 + cAmp Cos[2 Pi pts])]];   (* exact 1 *)
+rmseAt[meth_, d_, n_] := Sqrt@Mean@Table[
+   (fMean[RandomizedLDPoints[meth, n, d, 53 r + d]] - 1.)^2, {r, 120}];
 gain[n_] := Table[rmseAt[\"MonteCarlo\", d, n]/rmseAt[\"Sobol\", d, n], {d, 2, 12}];
 {gain[4096], gain[65536]}"],
 
 imgCell["dimension.png"],
-captionCell["Figure 6.1  Sobol\[CloseCurlyQuote] efficiency gain (Monte \
-Carlo RMSE divided by Sobol\[CloseCurlyQuote] RMSE, at a fixed budget) \
-versus dimension, for two budgets. In low dimension Sobol\
-\[CloseCurlyQuote] is tens to hundreds of times more accurate per sample; \
-the gain decays steadily as ", math["d"], " climbs and the ",
-   pow[RowBox[{"(", "log", " ", "N", ")"}], "d"], " penalty bites, heading \
-toward parity (grey line). \
-The six-parameter PK problem of this post sits where the gain is still \
-large \[LongDash] the QMC sweet spot."],
-
-para[{"The practical lesson: QMC is most valuable in low-to-moderate \
-dimension (say ", imath@RowBox[{"d", "\[LessEqual]", "20"}],
-   "), or whenever the integrand has low ", ital["effective"], " dimension \
-\[LongDash] a few directions that matter and many that barely do. Many \
-Bayesian models, including this one, are exactly that."}]
+caption["Figure 7.  Sobol\[CloseCurlyQuote] efficiency gain (MC RMSE / \
+Sobol\[CloseCurlyQuote] RMSE, fixed budget) versus dimension. Tens to \
+hundreds of times more accurate in low dimension, decaying toward parity \
+as the ", math["(log N)\^d"], " penalty bites. The six-parameter PK problem \
+sits where the gain is still large."]
 }];
 
 
 (* ==================================================================
-   7.  SYNTHETIC RECOVERY
+   9. SYNTHETIC RECOVERY
    ================================================================== *)
-
 writeAll[{
 
-hd1["7.  Correctness: synthetic-truth recovery"],
+section["9.  Does it recover the truth?"],
 
-para[{"A fast wrong answer is worthless, so we check that the QMC \
-machinery recovers parameters we ", ital["know"], ". We generate \
-concentrations from a fixed \"true\" parameter vector plus noise, fit the \
-same model, and ask whether the posterior brackets the truth:"}],
+para[{"A fast wrong answer is worthless, so we generate data from known \
+parameters, fit, and check the posterior brackets them:"}],
 
-wlIn["(* Generate synthetic data from known truth, then fit. *)
-thetaTrue = {1.20, 2.50, 30.0, 1.80, 22.0, 0.45};
+wlIn["thetaTrue = {1.20, 2.50, 30.0, 1.80, 22.0, 0.45};
 {synProblem, synConc} = SyntheticProblem[thetaTrue, 320.0,
    {0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 10, 12, 16, 20, 24, 30},
    priorMedians, priorLogSD, 4242];
 synDraws = PosteriorDraws[LDPoints[\"Sobol\", 8192, 6],
    LaplacePosterior[synProblem]];
-Mean /@ Transpose[synDraws]                  (* posterior means *)"],
+Mean /@ Transpose[synDraws]"],
 
 imgCell["synthetic.png"],
-captionCell["Figure 7.1  Synthetic-truth recovery. Each parameter is shown \
-as its posterior estimate divided by the true value, with a 90% credible \
-interval; the red line at 1.0 is the truth. The well-identified \
-parameters (", sub["k", "a"], ", ", math["CL"], ", ", sub["V", "1"],
-   ") land tight on the truth; the weakly-identified ", math["Q"], " and ",
-   sub["V", "2"], " have wide intervals that still cover it. The method is \
-correct, and it reports honest uncertainty where the data are \
-uninformative."]
+caption["Figure 8.  Posterior estimate / true value, with 90% credible \
+intervals (red line = truth). The well-identified parameters (",
+   sub["k", "a"], ", ", math["CL"], ", ", sub["V", "1"],
+   ") land on the truth; ", math["Q"], " and ", sub["V", "2"],
+   " carry wide intervals that still cover it. Correct, and honest about \
+what the data cannot say."]
 }];
 
 
 (* ==================================================================
-   8.  PRACTICAL PAY-OFF
+   10. PAY-OFF
    ================================================================== *)
-
 writeAll[{
 
-hd1["8.  The practical pay-off"],
+section["10.  The practical pay-off"],
 
-para[{"Slopes are abstract; model solves are money. The question a \
-practitioner asks is: ", ital["to reach the accuracy I need, how many \
-times must I run the forward model?"], " Inverting the fitted error laws \
-\[LongDash] ", imath@RowBox[{"N", "\[Proportional]",
-     SuperscriptBox["tol", RowBox[{"-", "2"}]]}], " for Monte Carlo, ",
-   imath@RowBox[{"N", "\[Proportional]", SuperscriptBox["tol", RowBox[{"-", "1"}]]}],
-   " for QMC \[LongDash] gives the count directly, and the ratio is the \
-speed-up:"}],
+para[{"Slopes are abstract; model solves are money. Inverting the fitted \
+error laws \[LongDash] ", imath@RowBox[{"N", "\[Proportional]", SuperscriptBox["tol", RowBox[{"-", "2"}]]}],
+   " for Monte Carlo, ", imath@RowBox[{"N", "\[Proportional]", SuperscriptBox["tol", RowBox[{"-", "1"}]]}],
+   " for QMC \[LongDash] gives the number of forward-model evaluations \
+needed for a target accuracy, and the ratio is the speed-up:"}],
 
-wlIn["(* Forward-model solves to reach a target accuracy on E[C(6 h)]. *)
-fitPow[e_] := Module[{c = Fit[Transpose[{Log[Nlist], Log[e]}], {1, x}, x]},
+wlIn["fitPow[e_] := Module[{c = Fit[Transpose[{Log[Nlist], Log[e]}], {1, x}, x]},
    {Exp[c /. x -> 0], Coefficient[c, x]}];
 nForTol[e_, tol_] := With[{cp = fitPow[e]}, (cp[[1]]/tol)^(1/(-cp[[2]]))];
-(* speed-up of Sobol' over MC at 0.1% relative accuracy *)
 nForTol[rmsePred[\"MonteCarlo\"], 0.001 refPred] /
    nForTol[rmsePred[\"Sobol\"], 0.001 refPred]"],
 
 imgCell["payoff.png"],
-captionCell["Figure 8.1  Forward-model solves required to reach a given \
-accuracy on the posterior-predictive concentration. Because Monte Carlo \
-needs ", bigO[SuperscriptBox["tol", RowBox[{"-", "2"}]]],
-   " evaluations while QMC needs ",
-   bigO[SuperscriptBox["tol", RowBox[{"-", "1"}]]],
-   ", the gap widens as you demand more accuracy: \
-Sobol\[CloseCurlyQuote] is about 2\[Times] cheaper at 1% accuracy, 4\
-\[Times] at 0.5%, and roughly 18\[Times] at 0.1%. When each evaluation is \
-an expensive ODE solve, that is the difference between an overnight run \
-and a coffee break."],
+caption["Figure 9.  Forward-model solves to reach a target accuracy on the \
+predicted concentration. Because MC needs ", math["O(tol\^(-2))"],
+   " and QMC ", math["O(tol\^(-1))"], ", the gap widens with the accuracy \
+demanded: ~2\[Times] at 1%, ~4\[Times] at 0.5%, ~18\[Times] at 0.1%."],
 
-para[{"This is the whole value proposition in one figure. QMC does not \
-change what you compute \[LongDash] same posterior, same estimand, same \
-code structure \[LongDash] it changes only ", ital["which points you \
-evaluate at"], ", and that single swap buys back most of an order of \
-magnitude (often more) in model runs."}]
+para[{"That is the value proposition in one figure. QMC changes neither the \
+model nor the estimand \[LongDash] only ", ital["which points you evaluate \
+at"], " \[LongDash] and that single swap buys back most of an order of \
+magnitude in expensive model runs."}]
 }];
 
 
 (* ==================================================================
-   9.  CONCLUSIONS
+   11. THE HERO ANIMATION (code)
    ================================================================== *)
-
 writeAll[{
 
-hd1["9.  Conclusions and caveats"],
+section["11.  The cover animation"],
 
-para[{"On a genuine six-parameter pharmacokinetic inference from the \
-Theophylline data, deterministic low-discrepancy sampling beats plain \
-Monte Carlo by close to a full power of ", math["N"], ": measured slopes \
-of ", imath@RowBox[{"\[TildeTilde]", RowBox[{"-", "0.95"}]}],
-   " for Sobol\[CloseCurlyQuote] and Halton against ",
-   imath@RowBox[{"\[TildeTilde]", RowBox[{"-", "0.5"}]}],
-   " for MC, and an order-of-magnitude saving in forward-model solves at \
-the accuracies that matter."}],
+para[{"For completeness, here is the code behind the animation at the top \
+\[LongDash] the same Monte-Carlo and Sobol\[CloseCurlyQuote] point sets \
+accumulating, with the running integration error traced beneath. It is the \
+whole post compressed into ", math["1/N"], " versus ", math["1/\[Sqrt]N"],
+   ":"}],
 
-para[{ital["When QMC helps, and when it does not."], " The gains are real \
-when (i) the dimension is low-to-moderate or the effective dimension is \
-small; (ii) the integrand is smooth, i.e. of bounded variation; and (iii) \
-evaluations are the bottleneck. They evaporate when the integrand is rough \
-or discontinuous (indicator functions, hard thresholds), when the \
-dimension is very large, or when an importance-sampling weight is \
-heavy-tailed \[LongDash] which is exactly why we integrate against a \
-smooth Gaussianized posterior rather than a spiky importance ratio."}],
-
-para[{ital["Reproducing the rate in your own work."], " The recipe is \
-portable: (1) reparameterize to an unconstrained space and build a \
-Gaussian (Laplace) approximation of the posterior; (2) map the unit cube \
-through it with the inverse-CDF transform; (3) replace your \
-pseudo-random draws with a randomized Sobol\[CloseCurlyQuote] or Halton \
-set; (4) average over a few randomizations to get an error bar. Steps 1\
-\[Dash]2 are standard Bayesian asymptotics; steps 3\[Dash]4 are a \
-two-line change to existing code."}]
+codeIn["frameNs = Round[2^Range[3, 12]];
+fInt[pt_] := Exp[Total[pt]];   exact = (E - 1.)^2;
+mcAll  = BlockRandom[SeedRandom[7]; RandomReal[1, {4096, 2}]];
+sobAll = LDPoints[\"Sobol\", 4096, 2];
+runErr[pts_] := Abs[Mean[fInt /@ pts] - exact];
+(* each frame: MC cloud | Sobol cloud, with the error-vs-N race below *)
+frames = Table[ Rasterize @ Column[{
+     Row[{ListPlot[mcAll[[1 ;; n]]], ListPlot[sobAll[[1 ;; n]]]}],
+     ListLogLogPlot[{ {#, runErr[mcAll[[1 ;; #]]]} & /@ Select[frameNs, # <= n &],
+                      {#, runErr[sobAll[[1 ;; #]]]} & /@ Select[frameNs, # <= n &] },
+        Joined -> True] }], {n, frameNs}];
+Export[\"hero.gif\", AnimatedImage[frames, FrameRate -> 1.4]]"]
 }];
 
 
 (* ==================================================================
-   10.  REFERENCES
+   12. CONCLUSIONS
    ================================================================== *)
-
 writeAll[{
 
-hd1["10.  References"],
+section["12.  Conclusions"],
 
-para[{bold["Halton, J. H."], " (1960). On the efficiency of certain \
-quasi-random sequences of points in evaluating multi-dimensional \
-integrals. ", ital["Numerische Mathematik"], " 2, 84\[Dash]90."}],
+para[{"On a real six-parameter pharmacokinetic inference, deterministic \
+low-discrepancy sampling beats plain Monte Carlo by close to a full power \
+of ", math["N"], " \[LongDash] measured slopes near ",
+   imath@RowBox[{"-", "0.95"}], " against ", imath@RowBox[{"-", "0.5"}],
+   ", and an order-of-magnitude saving in model evaluations at useful \
+accuracies. Against classical least squares, the Bayesian treatment adds \
+honest, regularized uncertainty where an unidentifiable model would \
+otherwise report nonsense error bars \[LongDash] and QMC is what makes \
+computing that uncertainty cheap."}],
 
-para[{bold["Sobol\[CloseCurlyQuote], I. M."], " (1967). On the \
-distribution of points in a cube and the approximate evaluation of \
-integrals. ", ital["USSR Comp. Math. and Math. Phys."], " 7, 86\[Dash]112."}],
+para[{ital["When QMC helps, and when it does not."], " It helps when the \
+dimension is low-to-moderate or the effective dimension is small, the \
+integrand is smooth, and evaluations are the bottleneck. It does not help \
+for rough or discontinuous integrands, very high dimension, or \
+heavy-tailed importance weights \[LongDash] which is why we integrate \
+against a smooth Gaussianized posterior rather than a spiky ratio."}],
 
-para[{bold["Joe, S., & Kuo, F. Y."], " (2008). Constructing Sobol\
-\[CloseCurlyQuote] sequences with better two-dimensional projections. ",
-   ital["SIAM J. Scientific Computing"], " 30, 2635\[Dash]2654. [The \
-direction numbers used here.]"}],
+para[{ital["The portable recipe."], " (1) reparameterize to an \
+unconstrained space and build a Gaussian approximation of the posterior; \
+(2) map the unit cube through it with the inverse-CDF transform; (3) swap \
+your pseudo-random draws for a randomized Sobol\[CloseCurlyQuote] or Halton \
+set; (4) average over a few randomizations for an error bar. Two lines of \
+change, most of an order of magnitude back."}]
+}];
+
+
+(* ==================================================================
+   13. REFERENCES + REPRODUCIBILITY
+   ================================================================== *)
+writeAll[{
+
+section["13.  References & reproducibility"],
+
+para[{bold["Halton, J. H."], " (1960). ", ital["Numerische Mathematik"],
+   " 2, 84\[Dash]90.  \[Bullet]  ", bold["Sobol\[CloseCurlyQuote], I. M."],
+   " (1967). ", ital["USSR Comp. Math. Math. Phys."], " 7, 86\[Dash]112.  \
+\[Bullet]  ", bold["Joe, S., & Kuo, F. Y."], " (2008). ", ital["SIAM J. \
+Sci. Comput."], " 30, 2635\[Dash]2654 (the direction numbers used here)."}],
 
 para[{bold["Niederreiter, H."], " (1992). ", ital["Random Number \
-Generation and Quasi-Monte Carlo Methods"], ". SIAM. [Koksma\[Dash]Hlawka, \
-discrepancy theory.]"}],
+Generation and Quasi-Monte Carlo Methods"], ", SIAM.  \[Bullet]  ",
+   bold["Caflisch, R. E."], " (1998). ", ital["Acta Numerica"], " 7, 1\
+\[Dash]49 (effective dimension).  \[Bullet]  ", bold["Owen, A. B."],
+   " (1998). ", ital["J. Complexity"], " 14, 466\[Dash]489 (randomized \
+QMC).  \[Bullet]  ", bold["Gerber, M., & Chopin, N."], " (2015). ",
+   ital["JRSS B"], " 77, 509\[Dash]579 (QMC in Bayesian computation)."}],
 
-para[{bold["Caflisch, R. E."], " (1998). Monte Carlo and quasi-Monte \
-Carlo methods. ", ital["Acta Numerica"], " 7, 1\[Dash]49. [Effective \
-dimension; when QMC wins.]"}],
+para[{bold["Boeckmann, Sheiner & Beal"], " (1994). ", ital["NONMEM \
+Users Guide"], " (the Theophylline data).  \[Bullet]  ",
+   bold["Gabrielsson & Weiner"], " (2016). ", ital["Pharmacokinetic and \
+Pharmacodynamic Data Analysis"], " (the two-compartment model)."}],
 
-para[{bold["Owen, A. B."], " (1998). Scrambling Sobol\[CloseCurlyQuote] \
-and Niederreiter\[Dash]Xing points. ", ital["J. Complexity"], " 14, 466\
-\[Dash]489. [Randomized QMC and error estimation.]"}],
-
-para[{bold["Gerber, M., & Chopin, N."], " (2015). Sequential quasi-Monte \
-Carlo. ", ital["J. Royal Statistical Society B"], " 77, 509\[Dash]579. \
-[QMC inside Bayesian computation.]"}],
-
-para[{bold["Boeckmann, A. J., Sheiner, L. B., & Beal, S. L."], " (1994). \
-", ital["NONMEM Users Guide"], ". University of California, San Francisco. \
-[Source of the Theophylline data set.]"}],
-
-para[{bold["Gabrielsson, J., & Weiner, D."], " (2016). ", ital["\
-Pharmacokinetic and Pharmacodynamic Data Analysis"], " (5th ed.). \
-[Two-compartment oral model.]"}]
-}];
-
-
-(* ==================================================================
-   11.  REPRODUCIBILITY
-   ================================================================== *)
-
-writeAll[{
-
-hd1["11.  Reproducibility"],
-
-para[{"All source code lives in the public repository ",
+para[{"All code is pure Wolfram Language at ",
    link["github.com/mthiel74/QuasiMonteCarloBayesianEstimation",
      "https://github.com/mthiel74/QuasiMonteCarloBayesianEstimation"],
-   ". The pipeline is pure Wolfram Language. To rebuild from scratch with \
-Wolfram Language 14+:"}],
+   ". The companion package ", mono["qmc_bayes_helpers.wl"], " is the single \
+source of truth; the figure scripts and this notebook both load it. To \
+rebuild:"}],
 
-codeIn["# 1. Fetch the Theophylline data into data/
-wolframscript -file wolfram/fetch_theoph.wls
-
-# 2. Render every figure into docs/images/
-wolframscript -file wolfram/run_all.wls
-
-# 3. Rebuild this notebook
+codeIn["wolframscript -file wolfram/fetch_theoph.wls   # real data -> data/
+wolframscript -file wolfram/run_all.wls        # all figures -> docs/images/
 wolframscript -file community/build_notebook.wls"],
 
-para[{"The companion package ", mono["community/qmc_bayes_helpers.wl"],
-   " is the single source of truth for the generators, the model, and the \
-estimators; the figure scripts and this notebook both load it. Every code \
-cell above calls into it with all arguments shown inline, so the post \
-doubles as runnable documentation."}],
-
-para[{Style["Generated on " <> DateString[Now, {"MonthName", " ",
-    "DayShort", ", ", "Year"}] <> ".",
-    FontSlant -> Italic, FontColor -> GrayLevel[0.4]]}]
+para[{Style["Generated " <> DateString[Now, {"MonthName", " ", "DayShort",
+    ", ", "Year"}] <> ".", FontSlant -> Italic, FontColor -> GrayLevel[0.45]]}]
 }];
 
 
 (* ---- assemble + save ---- *)
-
-(* `sub` helper used inline above for subscripted parameter names. *)
 Print["assembled ", Length[$allCells], " cells"];
-
-nbExpr = Notebook[$allCells, WindowSize -> {1000, 820},
-   StyleDefinitions -> "Default.nb"];
 
 TimeConstrained[
    UsingFrontEnd[
       nbObj = CreateDocument[$allCells, Visible -> False,
-         WindowSize -> {1000, 820}, StyleDefinitions -> "Default.nb"];
+         WindowSize -> {1000, 820}, StyleDefinitions -> styleDefs];
       NotebookSave[nbObj, outNb];
       Print["wrote ", outNb, " (", FileByteCount[outNb], " B)"];
       Quiet @ Check[Export[outPdf, nbObj];
          Print["wrote ", outPdf, " (", FileByteCount[outPdf], " B)"],
          Print["warn: PDF export failed"]];
       NotebookClose[nbObj];
-   ], 600, Print["warn: notebook save timed out"]];
+   ], 700, Print["warn: notebook save timed out"]];

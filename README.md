@@ -62,6 +62,8 @@ images.
 | ---                               | ---                                                                    |
 | `wolfram/fetch_theoph.wls`        | live fetch of the Theophylline data into `data/theoph.csv`             |
 | `community/qmc_bayes_helpers.wl`  | the single canonical package (generators, PK model, Bayes, estimators) |
+| `wolfram/hero.wls`                | the cover animation (MC vs Sobol' convergence race → `hero.gif`)       |
+| `wolfram/classical.wls`           | classical NLS vs Bayesian/QMC comparison figure                        |
 | `wolfram/*.wls`                   | figure renderers (sequences, convergence, dimension, fit, payoff)      |
 | `wolfram/run_all.wls`             | one entry point, writes `docs/images/*.png`                            |
 | `data/`                           | the tidy Theophylline CSV (committed for reproducibility)              |

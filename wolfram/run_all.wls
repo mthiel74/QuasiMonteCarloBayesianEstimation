@@ -7,7 +7,7 @@
 
 repoRoot = ParentDirectory @ DirectoryName[$InputFileName];
 scripts = {"sequences.wls", "convergence.wls", "dimension.wls",
-   "pk_fit.wls", "synthetic.wls", "payoff.wls"};
+   "pk_fit.wls", "synthetic.wls", "payoff.wls", "classical.wls", "hero.wls"};
 
 Do[
    Print["=== ", s, " ==="];
