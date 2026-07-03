@@ -10,17 +10,29 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       154,          7]
-NotebookDataLength[   2034737,      34170]
-NotebookOptionsPosition[   2022354,      33992]
-NotebookOutlinePosition[   2022795,      34010]
-CellTagsIndexPosition[   2022752,      34007]
+NotebookDataLength[   2039798,      34295]
+NotebookOptionsPosition[   2027405,      34118]
+NotebookOutlinePosition[   2027826,      34135]
+CellTagsIndexPosition[   2027783,      34132]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
+
+Cell[CellGroupData[{
+Cell["Quasi-Monte Carlo for a real Bayesian estimation", "Title",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"681e7b38-e110-44f7-8e18-f8cf60b67e8b"],
+
+Cell["\<\
+Sobol\[CloseCurlyQuote] and Halton sequences against plain Monte Carlo on a \
+six-parameter pharmacokinetic fit \[LongDash] and the textbook convergence \
+gap, measured on a real-data posterior\
+\>", "Subtitle",ExpressionUUID->"c764151a-c0a8-47fa-85d5-b8ce4552431b"],
+
 Cell[BoxData[
  TagBox[
-  DynamicModuleBox[{Image`Utilities`i$$ = 1, Image`InteractiveDump`play$$ = 
+  DynamicModuleBox[{Image`Utilities`i$$ = 10, Image`InteractiveDump`play$$ = 
    True, Image`InteractiveDump`hover$$ = False, Image`InteractiveDump`dir$$ = 
    AnimationDirection, Image`InteractiveDump`rate$$ = 1.4}, 
    TagBox[
@@ -29,8 +41,9 @@ Cell[BoxData[
       AnimationDirection->Dynamic[Image`InteractiveDump`dir$$],
       AnimationRate->Dynamic[Image`InteractiveDump`rate$$],
       AnimationRepetitions->DirectedInfinity[1],
-      AnimationRunTime->0.,
+      AnimationRunTime->147.84400177001953`,
       AnimationRunning->Dynamic[Image`InteractiveDump`play$$],
+      AnimationTimeIndex->6.4154303414480935`,
       AppearanceElements->None,
       ImageSize->{1, 1}], 
      PaneSelectorBox[{1->
@@ -18639,7 +18652,7 @@ M/A/RKgnwA==
   FrameRate -> 1.4, AnimationRunning -> True, AnimationRepetitions -> 
    DirectedInfinity[1]]]], "Output",
  CellMargins->{{20, 5}, {6, 10}},
- ShowCellLabel->False,ExpressionUUID->"9bdd37b1-a5d2-44c0-b2b2-f78a0b22a12f"],
+ ShowCellLabel->False,ExpressionUUID->"c5fcfde4-335b-4076-99da-f4568e6ab503"],
 
 Cell[TextData[{
  "The whole post in one animation. Left: ",
@@ -18666,17 +18679,7 @@ the ",
 }], "Text",
  FontSize->12,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"9deee5c9-c05f-4940-888e-4f79649289c9"],
-
-Cell[CellGroupData[{
-
-Cell["Quasi-Monte Carlo for a real Bayesian estimation", "Title",ExpressionUUID->"2ce6bd2f-db6d-45db-8bae-bd5e094183d0"],
-
-Cell["\<\
-Sobol\[CloseCurlyQuote] and Halton sequences against plain Monte Carlo on a \
-six-parameter pharmacokinetic fit \[LongDash] and the textbook convergence \
-gap, measured on real data\
-\>", "Subtitle",ExpressionUUID->"e834115c-d34e-4a57-91d3-e552cbb38e2f"],
+  0.4],ExpressionUUID->"ddb1628b-f26a-4748-b3bf-affd5307b9ed"],
 
 Cell[TextData[{
  "Almost every number a Bayesian reports \[LongDash] a posterior mean, a \
@@ -18684,11 +18687,11 @@ credible interval, a predicted drug concentration \[LongDash] is secretly an ",
  StyleBox["integral",
   FontWeight->Bold],
  " over the space of unknown parameters. This post is about computing those \
-integrals an order of magnitude more cheaply."
+integrals up to an order of magnitude more cheaply."
 }], "Text",
  FontSize->16,
  FontColor->GrayLevel[
-  0.2],ExpressionUUID->"83950ca5-05a0-4755-a274-f9f0def28e11"],
+  0.2],ExpressionUUID->"97522650-02b9-4892-af06-0365793b78cd"],
 
 Cell[TextData[{
  "The default tool is ",
@@ -18700,7 +18703,7 @@ assumption-free, but its error shrinks only as ",
   FormBox[
    SuperscriptBox["N", 
     RowBox[{"-", "1", "/", "2"}]], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"b3050585-678a-43ae-8063-e07117cd54ca"],
+  ExpressionUUID->"38b88f7d-7aef-4a46-94f7-980879eb734d"],
  " \[LongDash] one more correct digit costs a hundred times more samples. ",
  StyleBox["Quasi-Monte Carlo (QMC)",
   FontWeight->Bold],
@@ -18718,13 +18721,13 @@ smooth integrands the error then falls almost as fast as ",
       RowBox[{"-", "1"}]], 
      SuperscriptBox[
       RowBox[{"(", "log", " ", "N", ")"}], "d"]}], ")"}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"475d318a-f563-4d54-b1fb-c6743873b25d"],
+  "InlineFormula",ExpressionUUID->"d6d0f592-3709-4812-a656-4cc2ee0e491e"],
  " \[LongDash] nearly a full power of ",
  StyleBox["N",
   FontFamily->"Times",
   FontSlant->Italic],
  " better."
-}], "Text",ExpressionUUID->"9a294be8-7acc-4677-92be-d86904624ed8"],
+}], "Text",ExpressionUUID->"d3ff4fbf-c838-45d6-9838-e61610ff5d5e"],
 
 Cell[TextData[{
  "We test that promise on a genuine inference problem: a six-parameter \
@@ -18733,19 +18736,18 @@ pharmacokinetic model fit to the classic ",
   FontWeight->Bold],
  " data. We build Halton and Sobol\[CloseCurlyQuote] from scratch, set up the \
 posterior, contrast it with classical curve-fitting, and measure the \
-convergence. The headline, on real data: Monte-Carlo slopes near ",
+convergence. The headline, on a real-data posterior: Monte-Carlo slopes near ",
  Cell[BoxData[
   FormBox[
    RowBox[{"-", "0.5"}], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "de25c723-ee72-445b-8eca-50a26087cc3b"],
+  "27c8d560-a64f-4222-8dfb-d8faf1d959e3"],
  " against Sobol\[CloseCurlyQuote] slopes near ",
  Cell[BoxData[
   FormBox[
    RowBox[{"-", "0.95"}], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "ec98bd86-4ef7-4f46-be26-d774d9067330"],
- ", and roughly a 4\[Times]\[Dash]18\[Times] saving in expensive model \
-evaluations."
-}], "Text",ExpressionUUID->"bdda90fe-bf0f-47bf-9999-fb787d87d22d"],
+  "4c6625c3-31fa-49b0-9dd8-7ea60800707e"],
+ ", and a 2\[Times]\[Dash]18\[Times] saving in expensive model evaluations."
+}], "Text",ExpressionUUID->"cce5ed03-9d6a-4b65-bfd6-7f47dd1b495d"],
 
 Cell[TextData[{
  StyleBox["How to read this:",
@@ -18754,11 +18756,13 @@ Cell[TextData[{
 Wolfram Language, and the measured numbers. All figures are pre-rendered \
 \[LongDash] the post reads straight through \[LongDash] and every code cell \
 runs if you load the attached package."
-}], "Text",ExpressionUUID->"a25ed5d0-affe-440f-b308-e329719cacea"],
+}], "Text",ExpressionUUID->"d399d6b3-7b0b-4051-8037-2c0e7658b347"],
 
 Cell[CellGroupData[{
 
-Cell["Setup", "Section",ExpressionUUID->"96546eab-8ef9-48b7-8f07-e64065f9372a"],
+Cell["Setup", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"8403355c-8a21-4059-bd31-0cdd3875342e"],
 
 Cell[TextData[{
  StyleBox["Skip this if you only want to read.",
@@ -18770,12 +18774,12 @@ Cell[TextData[{
  " next to the notebook and evaluate the three cells below once. They define \
 the generators, the pharmacokinetic model, the data, the priors, and the \
 posterior that every later section reuses."
-}], "Text",ExpressionUUID->"4f029bb2-94d3-4222-80be-91fa4b5e2769"],
+}], "Text",ExpressionUUID->"9c0ff180-1105-4e1a-9aa5-f11117a84bcc"],
 
 Cell["\<\
 SetDirectory[NotebookDirectory[]];
 Get[\"qmc_bayes_helpers.wl\"];\
-\>", "Input",ExpressionUUID->"9b590ade-13c1-44be-963d-da45cbf8ec61"],
+\>", "Input",ExpressionUUID->"bef4fbd8-32d7-477e-8748-582ab57e1723"],
 
 Cell["\<\
 (* Lognormal-prior medians and log-scale SDs for {ka,CL,V1,Q,V2,sigma} *)
@@ -18785,19 +18789,21 @@ priorLogSD   = {0.6, 0.5, 0.5, 0.7, 0.7, 0.5};
 (* Real data: Theophylline Subject 1 (single 320 mg oral dose) *)
 theoph = LoadTheoph[];
 subj1  = SelectSubject[theoph, 1];\
-\>", "Input",ExpressionUUID->"6cf6e879-b6f0-43f6-a97e-4e310ffdf32d"],
+\>", "Input",ExpressionUUID->"3096b14b-f638-4c87-8d96-4e258184903b"],
 
 Cell["\<\
 (* The Bayesian problem and its Laplace-Gaussian posterior *)
 pkProblem = BayesProblem[subj1[\"dose\"], subj1[\"t\"], subj1[\"c\"],
    priorMedians, priorLogSD];
 pkLaplace = LaplacePosterior[pkProblem];\
-\>", "Input",ExpressionUUID->"e7fe7089-2241-4928-92ed-05e26d872081"]
+\>", "Input",ExpressionUUID->"62866b79-30ef-4eb0-a7f9-c9f6648626f9"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["1.  The square-root wall", "Section",ExpressionUUID->"14b76050-b760-4d0c-a885-6d37341d47f7"],
+Cell["1.  The square-root wall", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"58e89cb0-a552-42d1-b647-6d7f9889dcda"],
 
 Cell[TextData[{
  "Want the average of something over a space too big to enumerate? Sample it. \
@@ -18808,7 +18814,7 @@ Throw ",
  " random points, average the values. This Monte-Carlo estimate works in any \
 dimension with no smoothness assumptions \[LongDash] which is why it is \
 everywhere. The price is the error,"
-}], "Text",ExpressionUUID->"1b1d163d-b3a0-4a8e-8fe6-e023c3ba9213"],
+}], "Text",ExpressionUUID->"4ce7587f-a8fe-41d2-a00b-9a2d6ab1ee43"],
 
 Cell[BoxData[
  FormBox[
@@ -18820,15 +18826,15 @@ Cell[BoxData[
    RowBox[{"O", "(", 
     SuperscriptBox["N", 
      RowBox[{"-", "1", "/", "2"}]], ")"}]}], 
-  TraditionalForm]], "DisplayFormula",ExpressionUUID->"5459d072-2e4c-4f0c-\
-a06c-0801116d09b9"],
+  TraditionalForm]], "DisplayFormula",ExpressionUUID->"84ebed5b-e6d0-4641-\
+9608-47363f220dbd"],
 
 Cell["\<\
 Halving the error means quadrupling the work; one more decimal digit costs a \
 hundredfold. When each sample is an expensive model solve, that square-root \
 wall is the entire problem. Its cause is visible: random points clump and \
 leave gaps, wasting information. What if we placed them on purpose?\
-\>", "Text",ExpressionUUID->"02d4424b-85df-4368-83ee-c49a583beebe"],
+\>", "Text",ExpressionUUID->"aa987c9f-f2a3-4b48-8b55-6f1d0656423d"],
 
 Cell[CellGroupData[{
 
@@ -18838,7 +18844,7 @@ hal = LDPoints[\"Halton\", 256, 2];
 sob = LDPoints[\"Sobol\", 256, 2];
 GraphicsRow[ListPlot[#, AspectRatio -> 1, Frame -> True,
    PlotRange -> {{0, 1}, {0, 1}}, ImageSize -> 230] & /@ {mc, hal, sob}]\
-\>", "Input",ExpressionUUID->"928b0fee-16e0-4892-b368-37d89f95e709"],
+\>", "Input",ExpressionUUID->"415bef87-36c5-44d5-b9ae-b141a6f4b40f"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -21323,23 +21329,26 @@ AAAAAADgN/8PSoj5zg==
     Automatic, 
     MetaInformation -> <|
      "Exif" -> <|
-       "ImageWidth" -> 1720, "ImageLength" -> 608, "XResolution" -> 144, 
-        "YResolution" -> 144, "ResolutionUnit" -> "Inch", "Software" -> 
-        "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 6, 2, 23, 50, 48.}, "Instant", "Gregorian", 1.], 
-        "TimeZoneOffset" -> 1|>, 
+       "Image" -> <|
+         "ImageWidth" -> 1720, "ImageLength" -> 608, "XResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "YResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "ResolutionUnit" -> "Inches", "Software" -> 
+          "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
+          DateObject[{2026, 6, 2, 23, 50, 48}, "Instant", "Gregorian", 1.], 
+          "TimeZoneOffset" -> 1|>|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 6, 2, 23, 50, 48.}, "Instant", "Gregorian", 
-          None]}|>],
+        DateObject[{2026, 6, 2, 23, 50, 48}, "Instant", "Gregorian", 1.]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->660,
   ImageSizeRaw->{860., 304.},
   PlotRange->{{0, 860.}, {0, 304.}}]], "Output",
  CellMargins->{{45, 5}, {8, 8}},
- ShowCellLabel->False,ExpressionUUID->"f49c06d4-4f21-436b-bd1b-d1c90eec738b"]
+ ShowCellLabel->False,ExpressionUUID->"4e7dffe3-70c5-492e-b587-329342476073"]
 }, Open  ]],
 
 Cell["\<\
@@ -21351,12 +21360,14 @@ even, gap-free pattern.\
  FontSize->11.5,
  FontSlant->Italic,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"ad3964c7-2d96-49d6-95e8-f4fd9ee40dda"]
+  0.4],ExpressionUUID->"997515d7-748e-47cf-99ab-f108912c717b"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["2.  Low-discrepancy sequences", "Section",ExpressionUUID->"16fc1f7d-d01f-4302-b29e-c7462ac3ffd3"],
+Cell["2.  Low-discrepancy sequences", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"4f886b92-db87-4e6b-a253-7928d0c56043"],
 
 Cell[TextData[{
  "A ",
@@ -21378,21 +21389,25 @@ Their ",
  " ",
  StyleBox["star discrepancy",
   FontWeight->Bold],
- " \[LongDash] the worst box-vs-volume mismatch, by \
-Warnock\[CloseCurlyQuote]s exact formula \[LongDash] decays like ",
+ " \[LongDash] the root-mean-square box-vs-volume mismatch by Warnock\
+\[CloseCurlyQuote]s exact formula, a cheap proxy for the ",
+ StyleBox["L\[Infinity]",
+  FontFamily->"Times",
+  FontSlant->Italic],
+ " discrepancy in the theorem below \[LongDash] decays like ",
  Cell[BoxData[
   FormBox[
    SuperscriptBox["N", 
     RowBox[{"-", "1", "/", "2"}]], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"5ad6a0eb-9197-4511-8ec2-6104d9e15963"],
+  ExpressionUUID->"47d25fea-db02-46cc-9cce-62d55479381c"],
  " for random points but nearly ",
  Cell[BoxData[
   FormBox[
    SuperscriptBox["N", 
     RowBox[{"-", "1"}]], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "ee51a0ab-0ca3-4a54-bba8-2c88791f722e"],
+  "ac55073e-9a3b-4e21-b9f7-7db9053345c6"],
  " for these sequences:"
-}], "Text",ExpressionUUID->"c35dd301-46e1-4c07-a9f1-a1b62932794d"],
+}], "Text",ExpressionUUID->"9d7a5675-05d8-48d3-9d33-316a9f6ff81f"],
 
 Cell[CellGroupData[{
 
@@ -21405,7 +21420,7 @@ dHal = StarDiscrepancyL2[LDPoints[\"Halton\", #, 2]] & /@ Nvals;
 dSob = StarDiscrepancyL2[LDPoints[\"Sobol\", #, 2]] & /@ Nvals;
 ListLogLogPlot[{Transpose[{Nvals, dMC}], Transpose[{Nvals, dHal}],
    Transpose[{Nvals, dSob}]}, Joined -> True, Mesh -> All]\
-\>", "Input",ExpressionUUID->"793e5644-bad2-4c9d-a79a-ba36d5522dfc"],
+\>", "Input",ExpressionUUID->"d4804b69-f600-4607-997d-85abe2533c0d"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -23122,22 +23137,26 @@ AZLfxTM=
     Automatic, 
     MetaInformation -> <|
      "Exif" -> <|
-       "ImageWidth" -> 1240, "ImageLength" -> 899, "XResolution" -> 144, 
-        "YResolution" -> 144, "ResolutionUnit" -> "Inch", "Software" -> 
-        "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 6, 3, 4, 6, 6.}, "Instant", "Gregorian", 1.], 
-        "TimeZoneOffset" -> 1|>, 
+       "Image" -> <|
+         "ImageWidth" -> 1240, "ImageLength" -> 899, "XResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "YResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "ResolutionUnit" -> "Inches", "Software" -> 
+          "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
+          DateObject[{2026, 6, 3, 4, 6, 6}, "Instant", "Gregorian", 1.], 
+          "TimeZoneOffset" -> 1|>|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 6, 3, 4, 6, 6.}, "Instant", "Gregorian", None]}|>],
+        DateObject[{2026, 6, 3, 4, 6, 6}, "Instant", "Gregorian", 1.]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->660,
   ImageSizeRaw->{620., 449.5},
   PlotRange->{{0, 620.}, {0, 449.5}}]], "Output",
  CellMargins->{{45, 5}, {8, 8}},
- ShowCellLabel->False,ExpressionUUID->"86478c64-f283-4e96-b7c4-2d5ad03a35d9"]
+ ShowCellLabel->False,ExpressionUUID->"0b7805ef-743b-4511-9e59-d1ab4128d533"]
 }, Open  ]],
 
 Cell[TextData[{
@@ -23150,20 +23169,24 @@ Cell[TextData[{
   FontFamily->"Times",
   FontSlant->Italic],
  " (log-log). Monte Carlo rides the ",
- StyleBox["N\^(-1/2)",
-  FontFamily->"Times",
-  FontSlant->Italic],
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox["N", 
+    RowBox[{"-", "1", "/", "2"}]], TraditionalForm]], "InlineFormula",
+  ExpressionUUID->"ea6c8773-8620-44ba-a0ae-510fbb0e62e4"],
  " line; Halton and Sobol\[CloseCurlyQuote] track ",
- StyleBox["N\^(-1)",
-  FontFamily->"Times",
-  FontSlant->Italic],
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox["N", 
+    RowBox[{"-", "1"}]], TraditionalForm]], "InlineFormula",ExpressionUUID->
+  "0acd0589-1dee-4219-bb34-c0c8dbec2ed5"],
  "."
 }], "Text",
  CellMargins->{{45, 40}, {2, 14}},
  FontSize->11.5,
  FontSlant->Italic,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"0adf116b-49da-49fd-8951-873d732b1e3a"],
+  0.4],ExpressionUUID->"b424e0c0-7223-4c18-9550-f889e5f60c52"],
 
 Cell[TextData[{
  StyleBox["The theorem behind it.",
@@ -23176,13 +23199,13 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    RowBox[{"V", "(", "f", ")"}], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"7816125f-07f3-4a73-a064-91447a6b922d"],
+  ExpressionUUID->"a320dee9-a305-4118-a181-f0373d99c759"],
  " (Hardy\[Dash]Krause), the ",
  StyleBox["Koksma\[Dash]Hlawka inequality",
   FontWeight->Bold],
  " splits the QMC error into the function\[CloseCurlyQuote]s variation times \
 the points\[CloseCurlyQuote] discrepancy:"
-}], "Text",ExpressionUUID->"dc8c23ad-8cff-47d9-a522-64fd2cd34647"],
+}], "Text",ExpressionUUID->"9ae344a4-c0eb-44f2-9b89-960bda727ab4"],
 
 Cell[BoxData[
  FormBox[
@@ -23199,7 +23222,7 @@ Cell[BoxData[
      RowBox[{"\[DifferentialD]", "x"}]}]}], "\[RightBracketingBar]", "\[LessEqual]", 
    RowBox[{"V", "(", "f", ")"}], " ", 
    SubsuperscriptBox["D", "N", "*"]}], TraditionalForm]], "DisplayFormula",Exp\
-ressionUUID->"96a8f1ab-2e45-47c6-8517-3ff1d448d583"],
+ressionUUID->"53cf21d1-0fb5-4ca2-9b90-98004e145768"],
 
 Cell[TextData[{
  "With ",
@@ -23212,18 +23235,33 @@ Cell[TextData[{
       RowBox[{"-", "1"}]], 
      SuperscriptBox[
       RowBox[{"(", "log", " ", "N", ")"}], "d"], ")"}]}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"4d966543-1457-4410-a759-40ca74fef71c"],
- ", QMC inherits that rate \[LongDash] ",
+  "InlineFormula",ExpressionUUID->"6a7bd6d6-ff83-40b7-b7d5-6c785b586de1"],
+ " \[LongDash] this ",
+ Cell[BoxData[
+  FormBox[
+   SubsuperscriptBox["D", "N", "*"], TraditionalForm]], "InlineFormula",
+  ExpressionUUID->"82669991-6108-4b6f-96b2-d8996eaab610"],
+ " being the ",
+ StyleBox["L\[Infinity]",
+  FontFamily->"Times",
+  FontSlant->Italic],
+ " (supremum) star discrepancy, of which Figure 2 plots the cheaper ",
+ StyleBox["L\:2082",
+  FontFamily->"Times",
+  FontSlant->Italic],
+ " proxy \[LongDash] QMC inherits that rate, ",
  StyleBox["provided",
   FontSlant->Italic],
  " the integrand is smooth enough to have finite variation. That proviso \
 drives every modelling choice below."
-}], "Text",ExpressionUUID->"696602ae-7614-4631-9115-f677dc92d1a6"]
+}], "Text",ExpressionUUID->"71c7f925-8486-4ef1-bfb6-40ac9d8e75d3"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["3.  The model: a drug moving through the body", "Section",ExpressionUUID->"e4616aae-d498-4261-b3d3-421710ef7f48"],
+Cell["3.  The model: a drug moving through the body", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"4435c673-5fa4-48c7-8b66-8b73d8537d3b"],
 
 Cell[TextData[{
  StyleBox["What happens when you take a pill.",
@@ -23238,7 +23276,7 @@ decline. ",
  " is the quantitative description of that curve, and it is the backbone of \
 every dosing decision \[LongDash] how much, how often, and how confident we \
 are."
-}], "Text",ExpressionUUID->"a3c94d89-13d5-4be7-89b7-9ac994a101fe"],
+}], "Text",ExpressionUUID->"d305b2e7-4c4c-4ddc-8e49-801ed91dd863"],
 
 Cell[TextData[{
  "We use the canonical teaching data set, ",
@@ -23249,11 +23287,13 @@ single oral dose, serum concentration sampled 11 times over ~25 h. \
 Theophylline has a narrow therapeutic window (about 10\[Dash]20 mg/L; \
 toxicity climbs above it), so getting the curve \[LongDash] and its \
 uncertainty \[LongDash] right genuinely matters."
-}], "Text",ExpressionUUID->"aab7cffa-59b6-48ce-a475-06df8926a1c9"],
+}], "Text",ExpressionUUID->"084b3239-b1d2-46aa-afe2-2305e28a7403"],
 
 Cell[CellGroupData[{
 
-Cell["3.1  The two-compartment system", "Subsection",ExpressionUUID->"a4b2ddc7-ec69-41fb-b772-fab4ef30c790"],
+Cell["3.1  The two-compartment system", "Subsection",
+ FontColor->RGBColor[
+  0.2, 0.42, 0.5],ExpressionUUID->"c7cdc822-4f19-4f52-8cc0-97dc1134bcec"],
 
 Cell[TextData[{
  "The standard structural model splits the body into two well-mixed ",
@@ -23266,7 +23306,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "1"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "dd659491-8293-492e-bfd0-dcaf65fc0c39"],
+  "e7f50c68-a266-49ca-8e89-2618e597c40e"],
  ") where we actually measure concentration, and a ",
  StyleBox["peripheral",
   FontWeight->Bold],
@@ -23274,17 +23314,17 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "2"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "4ba0fc60-e075-4f7a-84ff-5ac638217eab"],
+  "5ec0879a-2c1f-4312-8950-abcbd5bcd227"],
  "). The swallowed dose sits in a gut depot ",
  Cell[BoxData[
   FormBox[
    SubscriptBox["A", "g"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "10963346-26c8-4e15-aaa2-9cea040998a7"],
+  "93d0177d-6196-4fbc-a8ab-c1cb1468175e"],
  " and is absorbed first-order into the central compartment; drug shuttles \
 between central and peripheral, and is cleared from the central compartment. \
 Writing the amounts in each compartment, the dynamics are a linear system of \
 ODEs:"
-}], "Text",ExpressionUUID->"4883c249-c43f-42cd-b39b-b3d8e25a4aff"],
+}], "Text",ExpressionUUID->"1f66007d-7205-4708-96bd-6d1e5e156903"],
 
 Cell[BoxData[
  FormBox[
@@ -23297,7 +23337,7 @@ Cell[BoxData[
     RowBox[{"-", 
      SubscriptBox["k", "a"]}], " ", 
     SubscriptBox["A", "g"]}]}], TraditionalForm]], "DisplayFormula",Expression\
-UUID->"06dd2eae-f950-4a2b-a22e-1886ccfb55bc"],
+UUID->"7f272ca3-eb4c-42c3-b31b-bc0553da4968"],
 
 Cell[BoxData[
  FormBox[
@@ -23322,7 +23362,7 @@ Cell[BoxData[
      FractionBox["Q", 
       SubscriptBox["V", "2"]], " ", 
      SubscriptBox["A", "2"]}]}]}], TraditionalForm]], "DisplayFormula",Express\
-ionUUID->"a4b96fec-7f44-46aa-8b10-53eb3ed93bed"],
+ionUUID->"cc418d74-5386-4600-b7ec-a2f91085d19d"],
 
 Cell[BoxData[
  FormBox[
@@ -23340,7 +23380,7 @@ Cell[BoxData[
      FractionBox["Q", 
       SubscriptBox["V", "2"]], " ", 
      SubscriptBox["A", "2"]}]}]}], TraditionalForm]], "DisplayFormula",Express\
-ionUUID->"0b295ac8-e728-47f9-954e-bad23ee46092"],
+ionUUID->"dfce6799-10b2-4e48-81fc-bdc0123e3c93"],
 
 Cell[TextData[{
  "with the oral dose as initial condition ",
@@ -23348,7 +23388,7 @@ Cell[TextData[{
   FormBox[
    RowBox[{
     SubscriptBox["A", "g"], "(", "0", ")", "=", "D"}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"f636fa70-101d-4657-82bc-4a6c94bd8a8a"],
+  "InlineFormula",ExpressionUUID->"e719d51d-6b20-4322-b204-fabd14b280e8"],
  ", ",
  Cell[BoxData[
   FormBox[
@@ -23356,7 +23396,7 @@ Cell[TextData[{
     SubscriptBox["A", "1"], "(", "0", ")", "=", 
     RowBox[{
      SubscriptBox["A", "2"], "(", "0", ")"}], "=", "0"}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"c52198ee-6d54-4731-87b4-1503087f76f7"],
+  "InlineFormula",ExpressionUUID->"c0617503-8114-45d6-8dc7-2584506512b6"],
  ", and the measured concentration ",
  Cell[BoxData[
   FormBox[
@@ -23364,19 +23404,21 @@ Cell[TextData[{
     RowBox[{
      SubscriptBox["A", "1"], "/", 
      SubscriptBox["V", "1"]}]}], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"290846e8-7c44-4fae-94e4-d5f45a050d9f"],
+  ExpressionUUID->"2449eba2-7fe1-4a60-af23-8a860613977e"],
  "."
-}], "Text",ExpressionUUID->"fbe96780-fa42-4552-85a2-e0b4ff4ef2a7"]
+}], "Text",ExpressionUUID->"e5565313-16ba-46c3-b797-8f77081d0006"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["3.2  The six parameters, one by one", "Subsection",ExpressionUUID->"c2aa6848-98bc-4891-998c-4ea520832a22"],
+Cell["3.2  The six parameters, one by one", "Subsection",
+ FontColor->RGBColor[
+  0.2, 0.42, 0.5],ExpressionUUID->"eeb39478-6f83-463c-9fc5-0a2943abf2ac"],
 
 Cell["\<\
 These are the unknowns we infer \[LongDash] each a physical quantity a \
 clinician can interpret:\
-\>", "Text",ExpressionUUID->"3c3abc56-3f7d-4b9a-a176-a06d99736de9"],
+\>", "Text",ExpressionUUID->"7d9a49ec-f7c3-4b31-8276-2e2ad601c504"],
 
 Cell[TextData[{
  StyleBox["ka",
@@ -23387,7 +23429,7 @@ Cell[TextData[{
   FontWeight->Bold],
  " (1/h). How fast the drug leaves the gut for the blood; it sets the \
 steepness of the rising limb and the time-to-peak."
-}], "Item",ExpressionUUID->"66337ae9-1e75-4e9b-b326-e1d11b4efcd8"],
+}], "Item",ExpressionUUID->"b7d89bd6-7ad3-4a14-9c95-cecc9f8d50ae"],
 
 Cell[TextData[{
  StyleBox["CL",
@@ -23402,9 +23444,9 @@ the total exposure ",
   FormBox[
    RowBox[{"AUC", "=", 
     RowBox[{"D", "/", "CL"}]}], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"fe09be0b-dd5f-43a2-bd13-febdad6607e5"],
+  ExpressionUUID->"6fa676a2-2142-4823-b1d6-959fe2c4cad2"],
  " \[LongDash] the single most important dosing parameter."
-}], "Item",ExpressionUUID->"1147f5e7-5013-4fdf-bfdc-4edd76706e62"],
+}], "Item",ExpressionUUID->"66448cda-be69-45ea-82e1-852eed6d5fb6"],
 
 Cell[TextData[{
  StyleBox["V1",
@@ -23417,9 +23459,9 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "1"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "6a548fd9-c2b2-499e-873b-1167e03d0b53"],
+  "c9b459fe-d406-45ba-80c1-309fc95acb1d"],
  " means a high peak."
-}], "Item",ExpressionUUID->"baaa9a17-8c92-4f74-b437-d9d722d7d134"],
+}], "Item",ExpressionUUID->"7c06a78c-7cbc-4038-b5dd-a9f019db2de7"],
 
 Cell[TextData[{
  StyleBox["Q",
@@ -23430,7 +23472,7 @@ Cell[TextData[{
   FontWeight->Bold],
  " (L/h). How fast drug exchanges with the tissues; it shapes the bend \
 between the fast and slow phases."
-}], "Item",ExpressionUUID->"110e03d9-17f4-485c-b2ae-e24a21485255"],
+}], "Item",ExpressionUUID->"c8bb4ab5-1657-4fee-8112-a3b7816fa379"],
 
 Cell[TextData[{
  StyleBox["V2",
@@ -23441,7 +23483,7 @@ Cell[TextData[{
   FontWeight->Bold],
  " (L). How much drug the tissues hold; it stretches the slow elimination \
 tail."
-}], "Item",ExpressionUUID->"2bc5a3a1-bd48-40a7-b991-d83d66b9153a"],
+}], "Item",ExpressionUUID->"cf12f747-323d-4428-abac-68245095745a"],
 
 Cell[TextData[{
  StyleBox["\[Sigma]",
@@ -23452,7 +23494,7 @@ Cell[TextData[{
   FontWeight->Bold],
  " (mg/L). The combined assay-plus-model noise on each measurement \
 \[LongDash] itself an unknown to be estimated."
-}], "Item",ExpressionUUID->"7c5305cf-003b-43de-8c8e-07fa1fc6d17b"],
+}], "Item",ExpressionUUID->"f7277d2b-8754-47b5-bc8d-7b3268e97d00"],
 
 Cell[TextData[{
  "From these follow the quantities dosing actually turns on: half-life ",
@@ -23463,19 +23505,21 @@ Cell[TextData[{
      RowBox[{"1", "/", "2"}]], "\[Proportional]", 
     RowBox[{
      SubscriptBox["V", "1"], "/", "CL"}]}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"df20be05-57ed-4f11-895c-8dc6ea1b2c68"],
+  "InlineFormula",ExpressionUUID->"ea65ed38-3c45-4ce7-afdf-3b08cd7ac536"],
  ", exposure ",
  Cell[BoxData[
   FormBox[
    RowBox[{"D", "/", "CL"}], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"8a0eff1d-5d09-4362-8c6e-43fdb3ae9b03"],
+  ExpressionUUID->"14c139aa-466d-4c5d-9a91-c5c86f2a019e"],
  ", peak concentration, and the steady state reached under repeated dosing."
-}], "Text",ExpressionUUID->"f19f0c4a-89f5-4d6c-80bb-76f4aa599462"]
+}], "Text",ExpressionUUID->"60749f38-b870-4614-a001-5410c4fceaa5"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["3.3  A closed form \[LongDash] no solver needed", "Subsection",ExpressionUUID->"015dee02-b25e-412e-8d1f-aace86012ece"],
+Cell["3.3  A closed form \[LongDash] no solver needed", "Subsection",
+ FontColor->RGBColor[
+  0.2, 0.42, 0.5],ExpressionUUID->"5fbb7e3c-49a3-489b-a43d-f5cfb4e06477"],
 
 Cell[TextData[{
  "Because the system is linear, it has an exact solution: a sum of three \
@@ -23491,13 +23535,13 @@ exponentials in the macro-rate constants ",
  Cell[BoxData[
   FormBox[
    SubscriptBox["k", "a"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "fc2fd151-dd3b-4ac1-9b2e-59fcf406da81"],
+  "a7d2e695-11fc-4fe1-b8b2-5ea37b525c6c"],
  ". This makes each likelihood evaluation a handful of ",
  StyleBox["Exp",
   FontFamily->"Source Code Pro",
   FontColor->RGBColor[0.153, 0.51, 0.64]],
  "s rather than an ODE solve:"
-}], "Text",ExpressionUUID->"4e49a4a2-db5c-48c9-8f6a-141df5790ed6"],
+}], "Text",ExpressionUUID->"05fd7f23-1654-46d5-8204-551e0f194707"],
 
 Cell[BoxData[
  FormBox[
@@ -23522,15 +23566,15 @@ Cell[BoxData[
       SuperscriptBox["e", 
        RowBox[{"-", 
         SubscriptBox["k", "a"], " ", "t"}]]}]}], ")"}]}], 
-  TraditionalForm]], "DisplayFormula",ExpressionUUID->"f943e2b7-8aae-450c-\
-b776-2dedd6840943"],
+  TraditionalForm]], "DisplayFormula",ExpressionUUID->"521ba063-aa23-499f-\
+bc81-190cfa6f1500"],
 
 Cell["\<\
 (* The closed-form concentration; ka, CL, V1, Q, V2, dose. *)
 Plot[PKConcentration[t, {1.5, 2.8, 30., 2.0, 20.}, 320.], {t, 0, 25},
    Frame -> True, FrameLabel -> {\"time (h)\", \"conc (mg/L)\"},
    PlotStyle -> RGBColor[0.153, 0.51, 0.64]]\
-\>", "Input",ExpressionUUID->"8c4c508c-437d-4ea6-8430-4c6003dbd6f3"],
+\>", "Input",ExpressionUUID->"35016da7-686d-4e57-a3c4-7f57c4fadb87"],
 
 Cell[TextData[{
  StyleBox["Why bother with six parameters? ",
@@ -23555,13 +23599,15 @@ point estimate, is exactly where the Bayesian treatment earns its keep."
  CellFrameColor->RGBColor[0.153, 0.51, 0.64],
  FontSize->13,
  Background->RGBColor[0.93, 0.96, 0.97],
- FrameMargins -> 12,ExpressionUUID->"2ce4484a-e0c2-4fdd-a755-0bba8ecc8d38"]
+ FrameMargins -> 12,ExpressionUUID->"620780f1-e060-4690-bbd7-5e9d9df52932"]
 }, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["4.  The Bayesian model, and why it is all integrals", "Section",ExpressionUUID->"60e73071-d16a-4ea4-9114-f520da5f8373"],
+Cell["4.  The Bayesian model, and why it is all integrals", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"2490115e-9990-4486-adbd-9b08850cdd19"],
 
 Cell[TextData[{
  "Each measurement is the model prediction plus Gaussian scatter, ",
@@ -23573,7 +23619,7 @@ Cell[TextData[{
      RowBox[{"C", "(", 
       SubscriptBox["t", "i"], ")"}], "+", 
      SubscriptBox["\[Epsilon]", "i"]}]}], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"a0eb2396-39d3-4a53-8c8b-03a4fd5bc5de"],
+  ExpressionUUID->"cec3fb40-6376-468e-8650-bccfcbda4a26"],
  " with ",
  Cell[BoxData[
   FormBox[
@@ -23581,13 +23627,13 @@ Cell[TextData[{
     SubscriptBox["\[Epsilon]", "i"], "\[Tilde]", 
     RowBox[{"N", "(", "0", ",", 
      SuperscriptBox["\[Sigma]", "2"], ")"}]}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"a52c0766-eef2-4726-8d05-b1823e26c73e"],
+  "InlineFormula",ExpressionUUID->"739bc564-d8a4-4563-930c-1dbf49d2efb2"],
  ". All six parameters are positive, so each gets a ",
  StyleBox["lognormal",
   FontWeight->Bold],
  " prior (a normal prior on its logarithm). Bayes\[CloseCurlyQuote] rule \
 gives the posterior:"
-}], "Text",ExpressionUUID->"4977f4f5-bfe0-4486-aad7-c43969907dc2"],
+}], "Text",ExpressionUUID->"cbc660c9-3658-46bb-89b8-a5704ece877a"],
 
 Cell[BoxData[
  FormBox[
@@ -23603,15 +23649,15 @@ Cell[BoxData[
        SubscriptBox["t", "i"], ")"}], ",", 
       SuperscriptBox["\[Sigma]", "2"]}], ")"}]}], " ", 
    RowBox[{"\[Pi]", "(", "\[Theta]", ")"}]}], 
-  TraditionalForm]], "DisplayFormula",ExpressionUUID->"3ac4c264-131b-4bd1-\
-bbb9-5e0aaff57a6d"],
+  TraditionalForm]], "DisplayFormula",ExpressionUUID->"26250104-5e24-4d0e-\
+b9d1-7db68d106445"],
 
 Cell[TextData[{
  "Now the key point. Everything we want from this posterior is an ",
  StyleBox["expectation",
   FontWeight->Bold],
  " \[LongDash] an integral over the six-dimensional parameter space:"
-}], "Text",ExpressionUUID->"74b3d491-76a1-416a-804b-5ebda668df2a"],
+}], "Text",ExpressionUUID->"c926285f-3823-4d44-a66c-c148eb90febd"],
 
 Cell[BoxData[
  FormBox[
@@ -23623,21 +23669,21 @@ Cell[BoxData[
     RowBox[{"g", "(", "\[Theta]", ")"}], " ", 
     RowBox[{"p", "(", "\[Theta]", "\[VerticalSeparator]", "c", ")"}], 
     RowBox[{"\[DifferentialD]", "\[Theta]"}]}]}], 
-  TraditionalForm]], "DisplayFormula",ExpressionUUID->"90f54ea3-fb80-4bb2-\
-ae27-2114e5f861a5"],
+  TraditionalForm]], "DisplayFormula",ExpressionUUID->"f7f4a265-5630-4d40-\
+9337-1fb4243187a0"],
 
 Cell[TextData[{
  "Posterior mean clearance? Take ",
  Cell[BoxData[
   FormBox[
    RowBox[{"g", "=", "CL"}], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"3ca2122a-b55e-4194-bf63-cd51a40ab781"],
+  ExpressionUUID->"773a6b47-db5a-4635-b09e-7bed6bbf1137"],
  ". Its uncertainty? ",
  Cell[BoxData[
   FormBox[
    RowBox[{"g", "=", 
     SuperscriptBox["CL", "2"]}], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"b5c13f61-ba75-42bd-8297-b7bfa73fffc8"],
+  ExpressionUUID->"0939c281-7623-4d48-9796-5b4059640913"],
  ". Probability the half-life exceeds a threshold? ",
  StyleBox["g",
   FontFamily->"Times",
@@ -23648,16 +23694,18 @@ Cell[TextData[{
    RowBox[{"g", "=", 
     RowBox[{"C", "(", 
      SubscriptBox["t", "*"], ")"}]}], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"8355b444-df3c-46e7-8449-a249dce1bbc4"],
+  ExpressionUUID->"9727290b-4f9f-4b56-866d-331e97bac572"],
  ". Six-dimensional integrals of a smooth density, with no closed form: the \
 exact setting where the choice of integration rule \[LongDash] Monte-Carlo or \
 quasi-Monte-Carlo \[LongDash] decides the cost."
-}], "Text",ExpressionUUID->"9e27006e-3258-429f-b0a7-009c9997964e"]
+}], "Text",ExpressionUUID->"8bfcdfd2-9375-4f02-a0af-184780878537"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["5.  Classical curve-fitting versus the Bayesian posterior", "Section",ExpressionUUID->"c842db12-d415-4096-acb5-36f48b26aaec"],
+Cell["5.  Classical curve-fitting versus the Bayesian posterior", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"0c9dedbc-cb25-45a3-9e68-ba817bd536f3"],
 
 Cell[TextData[{
  StyleBox["The classical reflex.",
@@ -23671,14 +23719,14 @@ Cell[TextData[{
   FontColor->RGBColor[0.153, 0.51, 0.64]],
  " \[LongDash] which slides the six parameters until the squared residuals \
 are smallest. It is fast and gives a tidy best-fit curve:"
-}], "Text",ExpressionUUID->"4521c1c7-e771-416d-af1a-66077b59f88c"],
+}], "Text",ExpressionUUID->"0a7592fa-629f-44fb-ab26-866174b836d2"],
 
 Cell["\<\
 model = PKConcentration[t, {ka, CL, V1, Q, V2}, subj1[\"dose\"]];
 nlm = NonlinearModelFit[Transpose[{subj1[\"t\"], subj1[\"c\"]}], model,
    {{ka, 1.5}, {CL, 2.8}, {V1, 30}, {Q, 2.0}, {V2, 20}}, t];
 {nlm[\"BestFitParameters\"], nlm[\"ParameterErrors\"]}\
-\>", "Input",ExpressionUUID->"1483adc3-01f7-4dde-8b75-b87a9d1ea51c"],
+\>", "Input",ExpressionUUID->"bdb93fa0-37c1-4548-b07d-a8e7dc1e9669"],
 
 Cell[TextData[{
  StyleBox["And the trouble it hides.",
@@ -23688,12 +23736,12 @@ standard errors come back enormous \[LongDash] of order ",
  Cell[BoxData[
   FormBox[
    SuperscriptBox["10", "6"], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"83080e59-8776-4267-8386-635f4e33b796"],
+  ExpressionUUID->"bd4d6ec6-f2e3-4145-b6f8-c5c428a70f2a"],
  "\[Dash]",
  Cell[BoxData[
   FormBox[
    SuperscriptBox["10", "7"], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"12fbd3a5-67a9-46bc-a3b2-4cbe3cc40a51"],
+  ExpressionUUID->"5f8b7571-d1f1-45fc-9be3-e30e4966eb07"],
  " on ",
  StyleBox["CL",
   FontFamily->"Times",
@@ -23702,17 +23750,17 @@ standard errors come back enormous \[LongDash] of order ",
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "1"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "732b40e1-5693-4e21-8e93-d0a746719704"],
+  "f827a5ff-b0e6-4739-baf1-e420d77ae00c"],
  ", ",
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "2"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "c4a30494-23f8-46e6-9b35-d1f3782df4ff"],
+  "92f8a485-2979-4111-85f8-f8a63fab6435"],
  ", with ",
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "2"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "3835fd21-97a4-47eb-ba35-924191c62a5f"],
+  "88972dc1-5f9b-437a-8417-3e1a64685094"],
  " driven to essentially zero. The reason is real: a two-compartment model is \
 ",
  StyleBox["not identifiable",
@@ -23720,7 +23768,7 @@ standard errors come back enormous \[LongDash] of order ",
  " from one subject\[CloseCurlyQuote]s eleven points, so the least-squares \
 surface is nearly flat in some directions and the linearized covariance blows \
 up. Classical fitting gives you a curve but no trustworthy uncertainty."
-}], "Text",ExpressionUUID->"6cacf9f5-ebf4-4290-9458-dffd6ff60d36"],
+}], "Text",ExpressionUUID->"a4279f68-e40f-4361-837b-e3d28a90bf2d"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -24381,23 +24429,26 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAKT1Z6HQ3dQ=
     Automatic, 
     MetaInformation -> <|
      "Exif" -> <|
-       "ImageWidth" -> 1560, "ImageLength" -> 692, "XResolution" -> 144, 
-        "YResolution" -> 144, "ResolutionUnit" -> "Inch", "Software" -> 
-        "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 6, 4, 22, 7, 3.}, "Instant", "Gregorian", 1.], 
-        "TimeZoneOffset" -> 1|>, 
+       "Image" -> <|
+         "ImageWidth" -> 1560, "ImageLength" -> 692, "XResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "YResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "ResolutionUnit" -> "Inches", "Software" -> 
+          "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
+          DateObject[{2026, 6, 4, 22, 7, 3}, "Instant", "Gregorian", 1.], 
+          "TimeZoneOffset" -> 1|>|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 6, 4, 22, 7, 3.}, "Instant", "Gregorian", None]}|>],
-   
+        DateObject[{2026, 6, 4, 22, 7, 3}, "Instant", "Gregorian", 1.]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->660,
   ImageSizeRaw->{780., 346.},
   PlotRange->{{0, 780.}, {0, 346.}}]], "Output",
  CellMargins->{{45, 5}, {8, 8}},
- ShowCellLabel->False,ExpressionUUID->"51e7a974-6d7f-434b-b2f9-8d46c0c73d10"],
+ ShowCellLabel->False,ExpressionUUID->"0b52d843-ac36-45a7-a428-26fa894151d5"],
 
 Cell[TextData[{
  "Figure 3.  Same data, two philosophies. ",
@@ -24415,7 +24466,7 @@ constrain."
  FontSize->11.5,
  FontSlant->Italic,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"db0a38fc-99fe-4dae-9df1-746a6a8a2a40"],
+  0.4],ExpressionUUID->"414dead9-3d2e-4e71-a97e-910c0fffd238"],
 
 Cell["\<\
 The Bayesian posterior fixes this honestly: the priors keep the \
@@ -24423,7 +24474,7 @@ weakly-identified directions finite, and the answer is a full joint \
 distribution \[LongDash] every parameter, every prediction, with calibrated \
 uncertainty. The catch is the one from \[Section]4: you must integrate. The \
 options:\
-\>", "Text",ExpressionUUID->"f53851d5-b8d8-4b06-bee8-63e9dc3681db"],
+\>", "Text",ExpressionUUID->"701d8a45-de44-40ae-a1b8-bb31d89bcb24"],
 
 Cell[TextData[{
  StyleBox["Grid quadrature",
@@ -24432,14 +24483,14 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    RowBox[{"10", " ", "points", "/", "dim"}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"37bd1a5e-34a2-4d51-b048-4e978c10065e"],
+  "InlineFormula",ExpressionUUID->"56c8727d-971c-4bc0-a87f-1a4b2386b75f"],
  " is ",
  Cell[BoxData[
   FormBox[
    SuperscriptBox["10", "6"], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"4e8e561a-63a2-420f-b169-d8b0d5080fe0"],
+  ExpressionUUID->"281f846f-bb4e-4981-8af7-feb695a92c6b"],
  " evaluations, and the accuracy is still poor)."
-}], "Item",ExpressionUUID->"567b2c1f-5195-415e-b772-97a8ae9bd060"],
+}], "Item",ExpressionUUID->"a5cb040a-927b-473a-8251-49f51c3c0932"],
 
 Cell[TextData[{
  StyleBox["Markov-chain Monte Carlo (MCMC)",
@@ -24450,17 +24501,17 @@ directly but inherits the ",
   FormBox[
    SuperscriptBox["N", 
     RowBox[{"-", "1", "/", "2"}]], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"7d45db60-908b-4041-adc1-f08d06ad8090"],
+  ExpressionUUID->"9527432f-5066-4d9c-b99d-931024d28e60"],
  " Monte-Carlo rate (worse, after autocorrelation) and needs tuning and \
 convergence checks."
-}], "Item",ExpressionUUID->"7a173610-ed8a-4550-84f5-1bee49af0219"],
+}], "Item",ExpressionUUID->"4f90deac-8e08-41a9-9ceb-ad16a106d688"],
 
 Cell[TextData[{
  StyleBox["Laplace approximation",
   FontWeight->Bold],
  " \[LongDash] fit a Gaussian at the posterior mode; cheap, and the basis we \
 build on here."
-}], "Item",ExpressionUUID->"71365867-ad42-4e03-9f48-a5e5f66b9d0a"],
+}], "Item",ExpressionUUID->"76dcafd7-6be4-4105-982d-6d04f4119a83"],
 
 Cell[TextData[{
  StyleBox["Quasi-Monte Carlo",
@@ -24470,23 +24521,25 @@ Cell[TextData[{
   FormBox[
    SuperscriptBox["N", 
     RowBox[{"-", "1"}]], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "f57cb8aa-7fb7-4a5d-9aca-ba5835a0dfb9"],
+  "a29178b4-7eca-4706-a2c6-56dd00583a12"],
  " for smooth integrands. For moderate-dimensional, smooth posteriors it is \
 the most evaluations-efficient of the lot \[LongDash] and it is a drop-in \
 replacement for the random draws."
-}], "Item",ExpressionUUID->"8b8eb239-7a24-44a5-945b-eab0a03a05bd"],
+}], "Item",ExpressionUUID->"c15d75f9-9de9-4551-8554-7038c13488be"],
 
 Cell["\<\
 QMC does not compete with MCMC so much as complement it: where you can \
 reparameterize the posterior to be smooth and roughly Gaussian (Bayesian \
 asymptotics says you usually can), QMC integration buys back most of the lost \
 power. That is the recipe we follow next.\
-\>", "Text",ExpressionUUID->"deb2e111-d4be-4ddd-9a40-c29098c007bd"]
+\>", "Text",ExpressionUUID->"ab29a33c-237c-4b5e-9d1a-7b5212a4b050"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["6.  The fit", "Section",ExpressionUUID->"92666d66-6c8e-48e8-a41e-363bf44ff929"],
+Cell["6.  The fit", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"8dd40655-5bd8-4bd4-81f1-94947bbba2f5"],
 
 Cell[TextData[{
  StyleBox["From posterior to a unit-cube integral.",
@@ -24500,13 +24553,13 @@ space, a multivariate normal ",
   FormBox[
    RowBox[{"N", "(", "\[Mu]", ",", "\[CapitalSigma]", ")"}], 
    TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "3b6577e9-be85-4938-aa29-c4dd0250d012"],
+  "df41bfe4-29bd-4a05-8138-d57679e374a2"],
  " on ",
  Cell[BoxData[
   FormBox[
    RowBox[{"\[CurlyPhi]", "=", 
     RowBox[{"log", " ", "\[Theta]"}]}], TraditionalForm]], "InlineFormula",
-  ExpressionUUID->"4e0662c3-d8b8-46fc-aa41-b70dbdd1b7e2"],
+  ExpressionUUID->"a84c607e-3cc4-47c8-8426-1619281e61a3"],
  " \[LongDash] and map the unit cube onto it with the inverse-CDF transform \
 ",
  Cell[BoxData[
@@ -24516,21 +24569,21 @@ space, a multivariate normal ",
      RowBox[{"L", " ", 
       SuperscriptBox["\[CapitalPhi]", 
        RowBox[{"-", "1"}]], "(", "u", ")"}]}]}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"cae9be72-27b5-447b-a959-ec8805401531"],
+  "InlineFormula",ExpressionUUID->"24f6550e-a3d7-4881-9afb-5fc7207acc87"],
  ", ",
  Cell[BoxData[
   FormBox[
    RowBox[{"L", 
     SuperscriptBox["L", "T"], "=", "\[CapitalSigma]"}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"2181e1ba-fe0b-44d3-8c77-8de348d5db34"],
+  "InlineFormula",ExpressionUUID->"fa654323-1c54-43d9-8f48-675dc4a60421"],
  ". A posterior expectation becomes an integral over ",
  Cell[BoxData[
   FormBox[
    SuperscriptBox[
     RowBox[{"[", "0", ",", "1", "]"}], "6"], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"c83ebe5f-9f91-4009-987c-a8a462e5bf6d"],
+  "InlineFormula",ExpressionUUID->"4eb22681-f7d1-498f-9b5b-d2c59e7d7be9"],
  " of a smooth, weight-free integrand \[LongDash] ready for QMC."
-}], "Text",ExpressionUUID->"ac8555e3-ce56-42b6-b477-99757461fdd4"],
+}], "Text",ExpressionUUID->"7aaba0ee-73a6-4524-ad21-f2fa462dda60"],
 
 Cell[CellGroupData[{
 
@@ -24541,7 +24594,7 @@ tGrid  = Subdivide[0., 25., 200];
 curves = ConcentrationCurves[draws, tGrid, subj1[\"dose\"]];
 band   = Transpose[curves];
 {Quantile[#, 0.05] & /@ band, Quantile[#, 0.95] & /@ band};\
-\>", "Input",ExpressionUUID->"c724ed60-4975-4dee-8db0-6895305b88b7"],
+\>", "Input",ExpressionUUID->"8d288f9d-5bd6-4165-9ae6-2a0dbe6692ff"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -25084,23 +25137,26 @@ aZb20VelHPqBzQEAAPDkulOid5kMBQAA4MMenRJNXyLzdfUAAABwbA9NiX5s
     Automatic, 
     MetaInformation -> <|
      "Exif" -> <|
-       "ImageWidth" -> 1240, "ImageLength" -> 815, "XResolution" -> 144, 
-        "YResolution" -> 144, "ResolutionUnit" -> "Inch", "Software" -> 
-        "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 6, 2, 23, 46, 22.}, "Instant", "Gregorian", 1.], 
-        "TimeZoneOffset" -> 1|>, 
+       "Image" -> <|
+         "ImageWidth" -> 1240, "ImageLength" -> 815, "XResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "YResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "ResolutionUnit" -> "Inches", "Software" -> 
+          "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
+          DateObject[{2026, 6, 2, 23, 46, 22}, "Instant", "Gregorian", 1.], 
+          "TimeZoneOffset" -> 1|>|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 6, 2, 23, 46, 22.}, "Instant", "Gregorian", 
-          None]}|>],
+        DateObject[{2026, 6, 2, 23, 46, 22}, "Instant", "Gregorian", 1.]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->660,
   ImageSizeRaw->{620., 407.5},
   PlotRange->{{0, 620.}, {0, 407.5}}]], "Output",
  CellMargins->{{45, 5}, {8, 8}},
- ShowCellLabel->False,ExpressionUUID->"781025b3-673a-43cf-8b4a-3353893a8adb"]
+ ShowCellLabel->False,ExpressionUUID->"be68c3cc-ef7f-4852-97b0-987c9f139037"]
 }, Open  ]],
 
 Cell["\<\
@@ -25112,7 +25168,7 @@ the slow elimination tail.\
  FontSize->11.5,
  FontSlant->Italic,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"f30e966d-a66c-4ff6-99d1-a62eb8a3d078"],
+  0.4],ExpressionUUID->"6c1d2542-f2c2-4529-84bf-cef734af359f"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -26061,23 +26117,26 @@ kOP/AlKqR8Y=
     Automatic, 
     MetaInformation -> <|
      "Exif" -> <|
-       "ImageWidth" -> 1552, "ImageLength" -> 932, "XResolution" -> 144, 
-        "YResolution" -> 144, "ResolutionUnit" -> "Inch", "Software" -> 
-        "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 6, 2, 23, 46, 22.}, "Instant", "Gregorian", 1.], 
-        "TimeZoneOffset" -> 1|>, 
+       "Image" -> <|
+         "ImageWidth" -> 1552, "ImageLength" -> 932, "XResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "YResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "ResolutionUnit" -> "Inches", "Software" -> 
+          "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
+          DateObject[{2026, 6, 2, 23, 46, 22}, "Instant", "Gregorian", 1.], 
+          "TimeZoneOffset" -> 1|>|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 6, 2, 23, 46, 22.}, "Instant", "Gregorian", 
-          None]}|>],
+        DateObject[{2026, 6, 2, 23, 46, 22}, "Instant", "Gregorian", 1.]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->660,
   ImageSizeRaw->{776., 466.},
   PlotRange->{{0, 776.}, {0, 466.}}]], "Output",
  CellMargins->{{45, 5}, {8, 8}},
- ShowCellLabel->False,ExpressionUUID->"a55b5aa7-7474-4f14-9e27-23ffd9f941cd"],
+ ShowCellLabel->False,ExpressionUUID->"61be9171-9d44-48c4-b583-76ad57a99cb6"],
 
 Cell[TextData[{
  "Figure 5.  Posterior marginals. Clearance ",
@@ -26088,12 +26147,12 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "1"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "93228266-3261-4dab-860e-6a2dea84a860"],
+  "a7f9c9d4-6a80-4f26-8520-b8551036be0c"],
  ", and absorption ",
  Cell[BoxData[
   FormBox[
    SubscriptBox["k", "a"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "e7c8fadc-1f69-4ebd-9909-934675b3302f"],
+  "5df7949d-3894-4786-9233-4c7571bb3c2e"],
  " are tightly determined; ",
  StyleBox["Q",
   FontFamily->"Times",
@@ -26102,14 +26161,14 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "2"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "cc6cd7f1-59e8-4177-af2d-f0d379f93267"],
+  "9f9cfa39-0307-49d5-9565-e1dfaf641a92"],
  " stay broad \[LongDash] honest uncertainty where the data are thin."
 }], "Text",
  CellMargins->{{45, 40}, {2, 14}},
  FontSize->11.5,
  FontSlant->Italic,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"cc8d6c62-b4ce-4567-8b50-0126e26181b6"],
+  0.4],ExpressionUUID->"22afff37-8d13-48d3-9a8c-0c78b13b35dd"],
 
 Cell[TextData[{
  StyleBox["Is the Gaussian approximation good enough? ",
@@ -26122,25 +26181,35 @@ Cell[TextData[{
  StyleBox["ImportanceEstimate",
   FontFamily->"Source Code Pro",
   FontColor->RGBColor[0.153, 0.51, 0.64]],
- "): the well-identified parameters agree to ~10%. And the convergence \
-demonstration does not depend on the approximation being perfect \[LongDash] \
-only on the integrand we actually integrate being smooth, which it is."
+ "): in our runs the well-identified parameters agree to ~10%. And the \
+convergence demonstration does not depend on the approximation being perfect \
+\[LongDash] only on the integrand we actually integrate being smooth, which \
+it is."
 }], "Text",
  CellFrame->{{3, 0}, {0, 0}},
  CellMargins->{{36, 40}, {8, 8}},
  CellFrameColor->RGBColor[0.153, 0.51, 0.64],
  FontSize->13,
  Background->RGBColor[0.93, 0.96, 0.97],
- FrameMargins -> 12,ExpressionUUID->"7c50791e-cd6f-4fe6-b5e6-b3b46a39b3d8"]
+ FrameMargins -> 12,ExpressionUUID->"045c29e0-9865-45ca-9ae7-246f7ec5ab46"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["7.  The convergence law", "Section",ExpressionUUID->"fb2282ad-343f-47b5-8755-34a906f6993a"],
+Cell["7.  The convergence law", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"3fca28bd-3803-458c-b90c-52b2c1c644c2"],
 
 Cell[TextData[{
- "Now the measurement. We estimate two posterior expectations and watch the \
-error fall with the number of points, for Monte Carlo, \
+ "Now the measurement. Both quantities are expectations under the Laplace\
+\[Dash]Gaussian posterior of \[Section]6 \[LongDash] a genuine real-data fit, \
+and crucially a smooth integrand, which is what entitles QMC to its near-",
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox["N", 
+    RowBox[{"-", "1"}]], TraditionalForm]], "InlineFormula",ExpressionUUID->
+  "d0e92391-dd64-4251-9164-5d2ea2405f4e"],
+ " rate. We watch the error fall with the number of points, for Monte Carlo, \
 Sobol\[CloseCurlyQuote], and Halton: the ",
  StyleBox["mean clearance",
   FontWeight->Bold],
@@ -26149,28 +26218,34 @@ Sobol\[CloseCurlyQuote], and Halton: the ",
   FormBox[
    RowBox[{
     SubscriptBox["E", "post"], "[", "CL", "]"}], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"ca08a0f2-9bc8-4287-abec-ca0525831501"],
- " (which has an analytic value under the Gaussian posterior, so we know the \
-truth exactly) and the ",
+  "InlineFormula",ExpressionUUID->"77163527-bab5-42c9-adc5-0a4c573eca54"],
+ " (linear in the parameters, hence analytic under the Gaussian, so we know \
+the truth exactly) and the ",
  StyleBox["predicted concentration at 6 h",
   FontWeight->Bold],
- " (no closed form \[LongDash] each evaluation a model solve). Errors are \
-averaged over independent randomizations (a digital shift for Sobol\
-\[CloseCurlyQuote], a Cranley\[Dash]Patterson rotation for Halton):"
-}], "Text",ExpressionUUID->"ab27edb5-faad-40b3-a8e6-ef5aa9c1f766"],
+ " (a nonlinear forward-model solve at every draw, with no closed form). \
+Errors are averaged over independent randomizations (a digital shift for \
+Sobol\[CloseCurlyQuote], a Cranley\[Dash]Patterson rotation for Halton):"
+}], "Text",ExpressionUUID->"eba1fe5d-c8fa-4126-a710-83f0934c9227"],
 
 Cell[CellGroupData[{
 
 Cell["\<\
-Nlist = 2^Range[7, 15];
-refCL = LaplaceMeanExact[pkLaplace][[2]];          (* exact E[CL] *)
+Nlist = 2^Range[7, 15];   meths = {\"MonteCarlo\", \"Sobol\", \"Halton\"};
+(* quantity 1: mean clearance \[LongDash] analytic under the Gaussian *)
+refCL = LaplaceMeanExact[pkLaplace][[2]];
 gCL   = #[[All, 2]] &;
-rmseCL = Association[# -> ExpectationRMSE[#, Nlist, 200, pkLaplace, gCL, \
-refCL] & /@
-   {\"MonteCarlo\", \"Sobol\", \"Halton\"}];
-ListLogLogPlot[Table[Transpose[{Nlist, rmseCL[m]}],
-   {m, {\"MonteCarlo\", \"Sobol\", \"Halton\"}}], Joined -> True, Mesh -> All]\
-\>", "Input",ExpressionUUID->"2fe1d490-1456-4a20-822b-9cd7c83ece80"],
+rmseCL = Association[# ->
+   ExpectationRMSE[#, Nlist, 200, pkLaplace, gCL, refCL] & /@ meths];
+(* quantity 2: predicted C(6 h) \[LongDash] a nonlinear model solve *)
+gPredVec = Flatten @ ConcentrationCurves[#, {6.}, subj1[\"dose\"]] &;
+refPred  = Mean @ gPredVec @
+   PosteriorDraws[LDPoints[\"Sobol\", 2^19, 6], pkLaplace];
+rmsePred = Association[# ->
+   ExpectationRMSE[#, Nlist, 200, pkLaplace, gPredVec, refPred] & /@ meths];
+GraphicsRow[ListLogLogPlot[Table[Transpose[{Nlist, #[m]}], {m, meths}],
+     Joined -> True, Mesh -> All] & /@ {rmseCL, rmsePred}]\
+\>", "Input",ExpressionUUID->"a13c8397-6f83-4940-87d4-7c8821ea9fff"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -29353,23 +29428,26 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACgwP4PIt0ezQ==
     Automatic, 
     MetaInformation -> <|
      "Exif" -> <|
-       "ImageWidth" -> 2240, "ImageLength" -> 895, "XResolution" -> 144, 
-        "YResolution" -> 144, "ResolutionUnit" -> "Inch", "Software" -> 
-        "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 6, 2, 23, 44, 34.}, "Instant", "Gregorian", 1.], 
-        "TimeZoneOffset" -> 1|>, 
+       "Image" -> <|
+         "ImageWidth" -> 2240, "ImageLength" -> 895, "XResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "YResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "ResolutionUnit" -> "Inches", "Software" -> 
+          "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
+          DateObject[{2026, 6, 2, 23, 44, 34}, "Instant", "Gregorian", 1.], 
+          "TimeZoneOffset" -> 1|>|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 6, 2, 23, 44, 34.}, "Instant", "Gregorian", 
-          None]}|>],
+        DateObject[{2026, 6, 2, 23, 44, 34}, "Instant", "Gregorian", 1.]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->660,
   ImageSizeRaw->{1120., 447.5},
   PlotRange->{{0, 1120.}, {0, 447.5}}]], "Output",
  CellMargins->{{45, 5}, {8, 8}},
- ShowCellLabel->False,ExpressionUUID->"3d5642a4-7ffe-42cf-ac06-d69b845729cc"]
+ ShowCellLabel->False,ExpressionUUID->"f17a4dc1-e89d-47a4-803d-d5ebd5e138d7"]
 }, Open  ]],
 
 Cell[TextData[{
@@ -29384,22 +29462,30 @@ Cell[TextData[{
  StyleBox["Right:",
   FontWeight->Bold],
  " posterior-predictive concentration at 6 h. Monte Carlo follows ",
- StyleBox["N\^(-1/2)",
-  FontFamily->"Times",
-  FontSlant->Italic],
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox["N", 
+    RowBox[{"-", "1", "/", "2"}]], TraditionalForm]], "InlineFormula",
+  ExpressionUUID->"a8461d30-e66d-4b7e-a9bf-f17dc1b05a73"],
  " (slope \[TildeTilde] ",
  StyleBox["-0.50",
   FontFamily->"Times",
   FontSlant->Italic],
- "); Sobol\[CloseCurlyQuote] and Halton follow ",
- StyleBox["N\^(-1)",
+ "); Sobol\[CloseCurlyQuote] and Halton both track ",
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox["N", 
+    RowBox[{"-", "1"}]], TraditionalForm]], "InlineFormula",ExpressionUUID->
+  "455483fe-4aea-45b6-a4f8-b4db2ce2850c"],
+ " (measured slopes from about ",
+ StyleBox["-0.8",
   FontFamily->"Times",
   FontSlant->Italic],
- " (slopes \[TildeTilde] ",
- StyleBox["-0.95",
+ " to ",
+ StyleBox["-0.96",
   FontFamily->"Times",
   FontSlant->Italic],
- "). At ",
+ ", Sobol\[CloseCurlyQuote] steepest). At ",
  StyleBox["N = 32768",
   FontFamily->"Times",
   FontSlant->Italic],
@@ -29410,18 +29496,29 @@ widening."
  FontSize->11.5,
  FontSlant->Italic,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"62fc8023-3a5d-4bfe-bbd6-4f21920eba08"],
+  0.4],ExpressionUUID->"45dcecb4-69e4-41f6-b0a0-7d73f4c59f60"],
 
-Cell["\<\
-That is the headline, on real data: the same number of model solves buys \
-nearly twice the correct digits with Sobol\[CloseCurlyQuote] as with Monte \
-Carlo.\
-\>", "Text",ExpressionUUID->"7ffe2b60-eca6-4012-bf49-be70e2595096"]
+Cell[TextData[{
+ "That is the headline, on a real-data posterior: at a fixed budget of model \
+solves Sobol\[CloseCurlyQuote] reaches roughly ",
+ StyleBox["50\[Times]",
+  FontFamily->"Times",
+  FontSlant->Italic],
+ " lower error than Monte Carlo at ",
+ StyleBox["N = 32768",
+  FontFamily->"Times",
+  FontSlant->Italic],
+ " \[LongDash] about 1.7 extra correct digits \[LongDash] and the gap keeps \
+widening. The result rides on the integrand being smooth (\[Section]6), not \
+on the Gaussian being exact."
+}], "Text",ExpressionUUID->"47e0f875-977a-49d4-9419-daa33edcae9f"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["8.  Why dimension matters", "Section",ExpressionUUID->"70d1f6f4-e254-43ae-99ba-3289e65216d3"],
+Cell["8.  Why dimension matters", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"c464095c-92b1-4086-805f-51e9e41c5e4c"],
 
 Cell[TextData[{
  "The ",
@@ -29429,7 +29526,7 @@ Cell[TextData[{
   FormBox[
    SuperscriptBox[
     RowBox[{"(", "log", " ", "N", ")"}], "d"], TraditionalForm]], 
-  "InlineFormula",ExpressionUUID->"70a8a722-9f3b-40da-a933-45efc077e54f"],
+  "InlineFormula",ExpressionUUID->"2fc671ec-2a18-4ace-a39e-640482cbe874"],
  " factor is not cosmetic: filling a cube evenly gets exponentially harder as \
 the dimension grows, so the QMC advantage erodes. Fix the budget ",
  StyleBox["N",
@@ -29437,7 +29534,7 @@ the dimension grows, so the QMC advantage erodes. Fix the budget ",
   FontSlant->Italic],
  " and measure how many times more accurate Sobol\[CloseCurlyQuote] is than \
 MC on a smooth test integral, across dimension:"
-}], "Text",ExpressionUUID->"ee1cfbd5-fb7c-40fb-b0ee-95fda09db8ff"],
+}], "Text",ExpressionUUID->"eea979af-5a82-491a-a0d9-d35e3f6731bc"],
 
 Cell[CellGroupData[{
 
@@ -29450,7 +29547,7 @@ rmseAt[meth_, d_, n_] := Sqrt@Mean@Table[
 gain[n_] := Table[rmseAt[\"MonteCarlo\", d, n]/rmseAt[\"Sobol\", d, n], {d, \
 2, 12}];
 {gain[4096], gain[65536]}\
-\>", "Input",ExpressionUUID->"d12d6c3e-33b8-4722-aca2-419e5ff441b6"],
+\>", "Input",ExpressionUUID->"72c743a2-9c12-4815-9ba1-71a99ca036eb"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -31282,32 +31379,37 @@ AAAAAAAA0PL+P0gw46o=
     Automatic, 
     MetaInformation -> <|
      "Exif" -> <|
-       "ImageWidth" -> 1320, "ImageLength" -> 913, "XResolution" -> 144, 
-        "YResolution" -> 144, "ResolutionUnit" -> "Inch", "Software" -> 
-        "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 6, 3, 4, 8, 53.}, "Instant", "Gregorian", 1.], 
-        "TimeZoneOffset" -> 1|>, 
+       "Image" -> <|
+         "ImageWidth" -> 1320, "ImageLength" -> 913, "XResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "YResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "ResolutionUnit" -> "Inches", "Software" -> 
+          "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
+          DateObject[{2026, 6, 3, 4, 8, 53}, "Instant", "Gregorian", 1.], 
+          "TimeZoneOffset" -> 1|>|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 6, 3, 4, 8, 53.}, "Instant", "Gregorian", None]}|>],
-   
+        DateObject[{2026, 6, 3, 4, 8, 53}, "Instant", "Gregorian", 1.]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->660,
   ImageSizeRaw->{660., 456.5},
   PlotRange->{{0, 660.}, {0, 456.5}}]], "Output",
  CellMargins->{{45, 5}, {8, 8}},
- ShowCellLabel->False,ExpressionUUID->"1b1daa3f-241b-453b-b54e-97d903ad5f86"]
+ ShowCellLabel->False,ExpressionUUID->"5b22e100-9672-4d6b-95f3-a22d4c22e564"]
 }, Open  ]],
 
 Cell[TextData[{
  "Figure 7.  Sobol\[CloseCurlyQuote] efficiency gain (MC RMSE / Sobol\
 \[CloseCurlyQuote] RMSE, fixed budget) versus dimension. Tens to hundreds of \
 times more accurate in low dimension, decaying toward parity as the ",
- StyleBox["(log N)\^d",
-  FontFamily->"Times",
-  FontSlant->Italic],
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox[
+    RowBox[{"(", "log", " ", "N", ")"}], "d"], TraditionalForm]], 
+  "InlineFormula",ExpressionUUID->"16eb1e7d-9a8f-419d-a4e2-236fcd51fd9c"],
  " penalty bites. The six-parameter PK problem sits where the gain is still \
 large."
 }], "Text",
@@ -31315,17 +31417,21 @@ large."
  FontSize->11.5,
  FontSlant->Italic,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"7359ce0f-82c8-4025-a3e1-48e183522d16"]
+  0.4],ExpressionUUID->"4d3bbbe2-4e9f-42de-913e-1a3646bcd5de"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["9.  Does it recover the truth?", "Section",ExpressionUUID->"28c56f0f-a0ed-4997-9911-7d17bc088051"],
+Cell["9.  Does it recover the truth?", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"dbf8d6f9-1302-45e7-8937-81193ce04138"],
 
 Cell["\<\
 A fast wrong answer is worthless, so we generate data from known parameters, \
-fit, and check the posterior brackets them:\
-\>", "Text",ExpressionUUID->"deb6b715-d449-4703-b4c8-3069b3b632d3"],
+fit, and check the posterior brackets them (on a deliberately denser time \
+grid than the real 11-point design, to isolate parameter recovery from data \
+sparsity):\
+\>", "Text",ExpressionUUID->"4499d8cf-b873-4dbf-af7f-60c0ecebd794"],
 
 Cell[CellGroupData[{
 
@@ -31337,7 +31443,7 @@ thetaTrue = {1.20, 2.50, 30.0, 1.80, 22.0, 0.45};
 synDraws = PosteriorDraws[LDPoints[\"Sobol\", 8192, 6],
    LaplacePosterior[synProblem]];
 Mean /@ Transpose[synDraws]\
-\>", "Input",ExpressionUUID->"922d421c-5889-40e4-b859-a4e4e16bd70c"],
+\>", "Input",ExpressionUUID->"7e5f9a14-c11e-4d5e-a892-d5624994dd1b"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -31861,23 +31967,26 @@ ew==
     Automatic, 
     MetaInformation -> <|
      "Exif" -> <|
-       "ImageWidth" -> 1240, "ImageLength" -> 755, "XResolution" -> 144, 
-        "YResolution" -> 144, "ResolutionUnit" -> "Inch", "Software" -> 
-        "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 6, 2, 23, 49, 35.}, "Instant", "Gregorian", 1.], 
-        "TimeZoneOffset" -> 1|>, 
+       "Image" -> <|
+         "ImageWidth" -> 1240, "ImageLength" -> 755, "XResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "YResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "ResolutionUnit" -> "Inches", "Software" -> 
+          "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
+          DateObject[{2026, 6, 2, 23, 49, 35}, "Instant", "Gregorian", 1.], 
+          "TimeZoneOffset" -> 1|>|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 6, 2, 23, 49, 35.}, "Instant", "Gregorian", 
-          None]}|>],
+        DateObject[{2026, 6, 2, 23, 49, 35}, "Instant", "Gregorian", 1.]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->660,
   ImageSizeRaw->{620., 377.5},
   PlotRange->{{0, 620.}, {0, 377.5}}]], "Output",
  CellMargins->{{45, 5}, {8, 8}},
- ShowCellLabel->False,ExpressionUUID->"eb0b14d4-681b-42f5-87ce-08fdec9b15aa"]
+ ShowCellLabel->False,ExpressionUUID->"2dc5c081-9d5d-4a46-92dd-98429e23b0b3"]
 }, Open  ]],
 
 Cell[TextData[{
@@ -31886,7 +31995,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    SubscriptBox["k", "a"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "67257a68-3107-4a85-8451-4bef7d7679fb"],
+  "893045c4-7891-47c3-8c6c-31476854a7c2"],
  ", ",
  StyleBox["CL",
   FontFamily->"Times",
@@ -31895,7 +32004,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "1"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "bb641ceb-9e5a-47dd-bb8c-012d1cc99d38"],
+  "41c1cecf-0925-4ce0-a1ca-da76598df29f"],
  ") land on the truth; ",
  StyleBox["Q",
   FontFamily->"Times",
@@ -31904,7 +32013,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    SubscriptBox["V", "2"], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "ac2987c2-8ff7-4c81-bc33-688a60f76661"],
+  "11bca43b-a75a-4443-83c3-9a44a7d0d2a6"],
  " carry wide intervals that still cover it. Correct, and honest about what \
 the data cannot say."
 }], "Text",
@@ -31912,12 +32021,14 @@ the data cannot say."
  FontSize->11.5,
  FontSlant->Italic,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"03c34e0c-225f-4997-9807-21a06372b651"]
+  0.4],ExpressionUUID->"4ded6e3b-21e6-4aa5-9937-81f749e510dd"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["10.  The practical pay-off", "Section",ExpressionUUID->"84c6cdb8-2541-430e-9c58-9c7f77c6cccc"],
+Cell["10.  The practical pay-off", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"3cf2da8e-5b63-4c53-855c-ad119d933ba5"],
 
 Cell[TextData[{
  "Slopes are abstract; model solves are money. Inverting the fitted error \
@@ -31927,17 +32038,17 @@ laws \[LongDash] ",
    RowBox[{"N", "\[Proportional]", 
     SuperscriptBox["tol", 
      RowBox[{"-", "2"}]]}], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "c82bfa37-79f2-422f-bff9-12e4d3ecfb74"],
+  "2799a8b4-8e66-4e1d-9d02-08d4e36fc642"],
  " for Monte Carlo, ",
  Cell[BoxData[
   FormBox[
    RowBox[{"N", "\[Proportional]", 
     SuperscriptBox["tol", 
      RowBox[{"-", "1"}]]}], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "aa21c878-3ed2-4a57-b4fb-89c1f2cf5079"],
+  "b7b67178-b646-4b93-86c1-982f47480d1f"],
  " for QMC \[LongDash] gives the number of forward-model evaluations needed \
 for a target accuracy, and the ratio is the speed-up:"
-}], "Text",ExpressionUUID->"826d5831-8aa2-4f75-8348-c2513a700132"],
+}], "Text",ExpressionUUID->"a5e12d39-186d-4437-917c-2882f5121e4c"],
 
 Cell[CellGroupData[{
 
@@ -31947,7 +32058,7 @@ fitPow[e_] := Module[{c = Fit[Transpose[{Log[Nlist], Log[e]}], {1, x}, x]},
 nForTol[e_, tol_] := With[{cp = fitPow[e]}, (cp[[1]]/tol)^(1/(-cp[[2]]))];
 nForTol[rmsePred[\"MonteCarlo\"], 0.001 refPred] /
    nForTol[rmsePred[\"Sobol\"], 0.001 refPred]\
-\>", "Input",ExpressionUUID->"ce721ed2-dd41-4ffe-8b65-e222bbeb5414"],
+\>", "Input",ExpressionUUID->"47dca5bc-170d-4687-ae9d-ccf0ba45375e"],
 
 Cell[BoxData[
  GraphicsBox[
@@ -33756,35 +33867,44 @@ AAAAAAAAAAAAZc//A8hGj10=
     Automatic, 
     MetaInformation -> <|
      "Exif" -> <|
-       "ImageWidth" -> 1280, "ImageLength" -> 965, "XResolution" -> 144, 
-        "YResolution" -> 144, "ResolutionUnit" -> "Inch", "Software" -> 
-        "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
-        DateObject[{2026, 6, 2, 23, 49, 26.}, "Instant", "Gregorian", 1.], 
-        "TimeZoneOffset" -> 1|>, 
+       "Image" -> <|
+         "ImageWidth" -> 1280, "ImageLength" -> 965, "XResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "YResolution" -> 
+          Quantity[144, "Inches"^(-1) IndependentUnit["pixels"]], 
+          "ResolutionUnit" -> "Inches", "Software" -> 
+          "Created with the Wolfram Language : www.wolfram.com", "DateTime" -> 
+          DateObject[{2026, 6, 2, 23, 49, 26}, "Instant", "Gregorian", 1.], 
+          "TimeZoneOffset" -> 1|>|>, 
       "Comments" -> {
        "Software" -> "Created with the Wolfram Language : www.wolfram.com", 
         "Creation Time" -> 
-        DateObject[{2026, 6, 2, 23, 49, 26.}, "Instant", "Gregorian", 
-          None]}|>],
+        DateObject[{2026, 6, 2, 23, 49, 26}, "Instant", "Gregorian", 1.]}|>],
    Selectable->False],
   DefaultBaseStyle->"ImageGraphics",
   ImageSize->660,
   ImageSizeRaw->{640., 482.5},
   PlotRange->{{0, 640.}, {0, 482.5}}]], "Output",
  CellMargins->{{45, 5}, {8, 8}},
- ShowCellLabel->False,ExpressionUUID->"1f411aab-656b-453f-a514-54a85b184c41"]
+ ShowCellLabel->False,ExpressionUUID->"36017510-84dd-435a-9d33-08a474b5c6a7"]
 }, Open  ]],
 
 Cell[TextData[{
  "Figure 9.  Forward-model solves to reach a target accuracy on the predicted \
 concentration. Because MC needs ",
- StyleBox["O(tol\^(-2))",
-  FontFamily->"Times",
-  FontSlant->Italic],
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"O", "(", 
+    SuperscriptBox["tol", 
+     RowBox[{"-", "2"}]], ")"}], TraditionalForm]], "InlineFormula",
+  ExpressionUUID->"f005a074-6b5b-42d4-ad95-7be7047ed0a9"],
  " and QMC ",
- StyleBox["O(tol\^(-1))",
-  FontFamily->"Times",
-  FontSlant->Italic],
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"O", "(", 
+    SuperscriptBox["tol", 
+     RowBox[{"-", "1"}]], ")"}], TraditionalForm]], "InlineFormula",
+  ExpressionUUID->"b637158f-271c-4cf1-9e13-fe9c291b8459"],
  ", the gap widens with the accuracy demanded: ~2\[Times] at 1%, ~4\[Times] \
 at 0.5%, ~18\[Times] at 0.1%."
 }], "Text",
@@ -33792,7 +33912,7 @@ at 0.5%, ~18\[Times] at 0.1%."
  FontSize->11.5,
  FontSlant->Italic,
  FontColor->GrayLevel[
-  0.4],ExpressionUUID->"50d42562-2a30-4b68-813e-75ede2dbcb5c"],
+  0.4],ExpressionUUID->"5be7b1d6-377d-4806-9935-e6d194ba12f8"],
 
 Cell[TextData[{
  "That is the value proposition in one figure. QMC changes neither the model \
@@ -33801,12 +33921,14 @@ nor the estimand \[LongDash] only ",
   FontSlant->Italic],
  " \[LongDash] and that single swap buys back most of an order of magnitude \
 in expensive model runs."
-}], "Text",ExpressionUUID->"04b9953f-86a5-4248-b9b9-318ece1acb79"]
+}], "Text",ExpressionUUID->"514548f4-8a7b-438d-81f1-2d9f289ae563"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["11.  The cover animation", "Section",ExpressionUUID->"2e55ed9d-deeb-4822-9e99-ca6236f10a07"],
+Cell["11.  The cover animation", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"9c9f6882-bbbe-4635-a4c1-b80ab316528d"],
 
 Cell[TextData[{
  "For completeness, here is the code behind the animation at the top \
@@ -33821,7 +33943,7 @@ whole post compressed into ",
   FontFamily->"Times",
   FontSlant->Italic],
  ":"
-}], "Text",ExpressionUUID->"63ae157e-f88e-4184-aa49-2e878cc6b2be"],
+}], "Text",ExpressionUUID->"0df3151b-9fb5-4ab8-94f6-41ef087fb07d"],
 
 Cell["\<\
 frameNs = Round[2^Range[3, 12]];
@@ -33841,15 +33963,17 @@ Export[\"hero.gif\", AnimatedImage[frames, FrameRate -> 1.4]]\
 \>", "Program",
  ShowStringCharacters->False,
  Background->RGBColor[
-  0.96, 0.97, 0.98],ExpressionUUID->"d403b44b-e17d-4d19-a195-c5342cafd4b6"]
+  0.96, 0.97, 0.98],ExpressionUUID->"d520ecf4-ba12-4022-abf5-c9275632ecd3"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["12.  Conclusions", "Section",ExpressionUUID->"7b5ed461-0818-4843-81a2-ea1f3a3a8dcc"],
+Cell["12.  Conclusions", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"b04b588a-fe59-4230-98f7-839306b26cac"],
 
 Cell[TextData[{
- "On a real six-parameter pharmacokinetic inference, deterministic \
+ "On the posterior of a real six-parameter pharmacokinetic fit, deterministic \
 low-discrepancy sampling beats plain Monte Carlo by close to a full power of ",
  StyleBox["N",
   FontFamily->"Times",
@@ -33858,18 +33982,18 @@ low-discrepancy sampling beats plain Monte Carlo by close to a full power of ",
  Cell[BoxData[
   FormBox[
    RowBox[{"-", "0.95"}], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "3094d771-258e-45b1-a48d-cbd77b4d7497"],
+  "113e37ff-291e-4387-b6b1-6e7736c0ee60"],
  " against ",
  Cell[BoxData[
   FormBox[
    RowBox[{"-", "0.5"}], TraditionalForm]], "InlineFormula",ExpressionUUID->
-  "42130c1f-8c4a-48e9-917b-6fa9d2f86188"],
- ", and an order-of-magnitude saving in model evaluations at useful \
-accuracies. Against classical least squares, the Bayesian treatment adds \
-honest, regularized uncertainty where an unidentifiable model would otherwise \
-report nonsense error bars \[LongDash] and QMC is what makes computing that \
-uncertainty cheap."
-}], "Text",ExpressionUUID->"d5ce27b3-eb1b-4cd6-a02d-e3b04aa55afe"],
+  "60684785-2011-4c5b-91b6-ab0a3d8f1cb0"],
+ ", and a 2\[Times]\[Dash]18\[Times] saving in model evaluations (up to an \
+order of magnitude at the tightest tolerances). Against classical least \
+squares, the Bayesian treatment adds honest, regularized uncertainty where an \
+unidentifiable model would otherwise report nonsense error bars \[LongDash] \
+and QMC is what makes computing that uncertainty cheap."
+}], "Text",ExpressionUUID->"62e84f5d-4340-4423-b958-0a4908da95da"],
 
 Cell[TextData[{
  StyleBox["When QMC helps, and when it does not.",
@@ -33879,7 +34003,7 @@ is small, the integrand is smooth, and evaluations are the bottleneck. It \
 does not help for rough or discontinuous integrands, very high dimension, or \
 heavy-tailed importance weights \[LongDash] which is why we integrate against \
 a smooth Gaussianized posterior rather than a spiky ratio."
-}], "Text",ExpressionUUID->"3e926756-21cf-4470-85d3-98096701f3b5"],
+}], "Text",ExpressionUUID->"dad9d23c-b535-4863-970e-fce4e4bd65ff"],
 
 Cell[TextData[{
  StyleBox["The portable recipe.",
@@ -33889,12 +34013,14 @@ approximation of the posterior; (2) map the unit cube through it with the \
 inverse-CDF transform; (3) swap your pseudo-random draws for a randomized \
 Sobol\[CloseCurlyQuote] or Halton set; (4) average over a few randomizations \
 for an error bar. Two lines of change, most of an order of magnitude back."
-}], "Text",ExpressionUUID->"42b9ea2d-97f8-4847-8893-6ca6be1ffd99"]
+}], "Text",ExpressionUUID->"07e448ea-a43c-44b6-8661-01a8b39770e9"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
-Cell["13.  References & reproducibility", "Section",ExpressionUUID->"c2131834-74bf-42ec-8698-efa5ef95ab78"],
+Cell["13.  References & reproducibility", "Section",
+ FontColor->RGBColor[
+  0.153, 0.51, 0.64],ExpressionUUID->"8069c131-e3ad-438a-86b3-b94d6ccc638d"],
 
 Cell[TextData[{
  StyleBox["Halton, J. H.",
@@ -33915,7 +34041,7 @@ Cell[TextData[{
  StyleBox["SIAM J. Sci. Comput.",
   FontSlant->Italic],
  " 30, 2635\[Dash]2654 (the direction numbers used here)."
-}], "Text",ExpressionUUID->"89a50055-28c7-4b36-8bd4-ed3ced81e05e"],
+}], "Text",ExpressionUUID->"9b7a555c-299c-4f27-b49e-c171c7bba051"],
 
 Cell[TextData[{
  StyleBox["Niederreiter, H.",
@@ -33942,7 +34068,7 @@ Cell[TextData[{
  StyleBox["JRSS B",
   FontSlant->Italic],
  " 77, 509\[Dash]579 (QMC in Bayesian computation)."
-}], "Text",ExpressionUUID->"3b1f0c1f-a31d-49e8-85a2-1ca78d1e12ad"],
+}], "Text",ExpressionUUID->"8b3cb4fc-472c-4b44-8f1e-477f349ba693"],
 
 Cell[TextData[{
  StyleBox["Boeckmann, Sheiner & Beal",
@@ -33957,7 +34083,7 @@ Cell[TextData[{
  StyleBox["Pharmacokinetic and Pharmacodynamic Data Analysis",
   FontSlant->Italic],
  " (the two-compartment model)."
-}], "Text",ExpressionUUID->"3a28291a-56d1-4b27-9a4f-2d6c047e6791"],
+}], "Text",ExpressionUUID->"e10f4c38-24a9-4153-a013-e46235137630"],
 
 Cell[TextData[{
  "All code is pure Wolfram Language at ",
@@ -33974,7 +34100,7 @@ Cell[TextData[{
   FontColor->RGBColor[0.153, 0.51, 0.64]],
  " is the single source of truth; the figure scripts and this notebook both \
 load it. To rebuild:"
-}], "Text",ExpressionUUID->"fc26be2c-e944-4daf-8430-fa5624043854"],
+}], "Text",ExpressionUUID->"893bd317-b78a-41f2-9fae-8368f74c18e6"],
 
 Cell["\<\
 wolframscript -file wolfram/fetch_theoph.wls   # real data -> data/
@@ -33983,20 +34109,19 @@ wolframscript -file community/build_notebook.wls\
 \>", "Program",
  ShowStringCharacters->False,
  Background->RGBColor[
-  0.96, 0.97, 0.98],ExpressionUUID->"8661035c-3645-48c5-8e3d-987d0254da06"],
+  0.96, 0.97, 0.98],ExpressionUUID->"1082d3ea-50ce-47bb-86b1-2f9e10cd5ace"],
 
-Cell["Generated June 4, 2026.",
- FontSlant->Italic,ExpressionUUID->"64db48e2-f1d8-45db-b105-8e5d2c040af7"]
+Cell["Generated June 23, 2026.",
+ FontSlant->Italic,ExpressionUUID->"983acedb-2b14-44c2-82dd-ce4210a6f8ee"]
 }, Open  ]]
 }, Open  ]]
 },
-WindowSize->{808, 900},
+WindowSize->{808, 904},
 WindowMargins->{{460, Automatic}, {Automatic, 50}},
-Visible->False,
 FontColor->GrayLevel[0.45],
-FrontEndVersion->"15.0 for Mac OS X ARM (64-bit) (October 27, 2025)",
+FrontEndVersion->"15.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
 StyleDefinitions->"Default.nb",
-ExpressionUUID->"54de6db2-6e93-431d-aa5e-7a5bc781ba6e"
+ExpressionUUID->"0f76bd0b-35a0-466f-a23a-1fdc7ea321d0"
 ]
 (* End of Notebook Content *)
 
@@ -34009,172 +34134,170 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
-Cell[554, 20, 1130683, 18621, 70, "Output",ExpressionUUID->"9bdd37b1-a5d2-44c0-b2b2-f78a0b22a12f"],
-Cell[1131240, 18643, 859, 25, 70, "Text",ExpressionUUID->"9deee5c9-c05f-4940-888e-4f79649289c9"],
 Cell[CellGroupData[{
-Cell[1132124, 18672, 120, 0, 70, "Title",ExpressionUUID->"2ce6bd2f-db6d-45db-8bae-bd5e094183d0"],
-Cell[1132247, 18674, 264, 4, 70, "Subtitle",ExpressionUUID->"e834115c-d34e-4a57-91d3-e552cbb38e2f"],
-Cell[1132514, 18680, 451, 10, 70, "Text",ExpressionUUID->"83950ca5-05a0-4755-a274-f9f0def28e11"],
-Cell[1132968, 18692, 1270, 34, 70, "Text",ExpressionUUID->"9a294be8-7acc-4677-92be-d86904624ed8"],
-Cell[1134241, 18728, 895, 19, 70, "Text",ExpressionUUID->"bdda90fe-bf0f-47bf-9999-fb787d87d22d"],
-Cell[1135139, 18749, 407, 7, 70, "Text",ExpressionUUID->"a25ed5d0-affe-440f-b308-e329719cacea"],
+Cell[576, 22, 164, 2, 157, "Title",ExpressionUUID->"681e7b38-e110-44f7-8e18-f8cf60b67e8b"],
+Cell[743, 26, 276, 4, 114, "Subtitle",ExpressionUUID->"c764151a-c0a8-47fa-85d5-b8ce4552431b"],
+Cell[1022, 32, 1130748, 18622, 604, "Output",ExpressionUUID->"c5fcfde4-335b-4076-99da-f4568e6ab503"],
+Cell[1131773, 18656, 859, 25, 71, "Text",ExpressionUUID->"ddb1628b-f26a-4748-b3bf-affd5307b9ed"],
+Cell[1132635, 18683, 457, 10, 81, "Text",ExpressionUUID->"97522650-02b9-4892-af06-0365793b78cd"],
+Cell[1133095, 18695, 1270, 34, 125, "Text",ExpressionUUID->"d3ff4fbf-c838-45d6-9838-e61610ff5d5e"],
+Cell[1134368, 18731, 897, 18, 101, "Text",ExpressionUUID->"cce5ed03-9d6a-4b65-bfd6-7f47dd1b495d"],
+Cell[1135268, 18751, 407, 7, 77, "Text",ExpressionUUID->"d399d6b3-7b0b-4051-8037-2c0e7658b347"],
 Cell[CellGroupData[{
-Cell[1135571, 18760, 79, 0, 70, "Section",ExpressionUUID->"96546eab-8ef9-48b7-8f07-e64065f9372a"],
-Cell[1135653, 18762, 509, 10, 70, "Text",ExpressionUUID->"4f029bb2-94d3-4222-80be-91fa4b5e2769"],
-Cell[1136165, 18774, 145, 3, 70, "Input",ExpressionUUID->"9b590ade-13c1-44be-963d-da45cbf8ec61"],
-Cell[1136313, 18779, 374, 8, 70, "Input",ExpressionUUID->"6cf6e879-b6f0-43f6-a97e-4e310ffdf32d"],
-Cell[1136690, 18789, 282, 5, 70, "Input",ExpressionUUID->"e7fe7089-2241-4928-92ed-05e26d872081"]
+Cell[1135700, 18762, 123, 2, 66, "Section",ExpressionUUID->"8403355c-8a21-4059-bd31-0cdd3875342e"],
+Cell[1135826, 18766, 509, 10, 77, "Text",ExpressionUUID->"9c0ff180-1105-4e1a-9aa5-f11117a84bcc"],
+Cell[1136338, 18778, 145, 3, 46, "Input",ExpressionUUID->"bef4fbd8-32d7-477e-8748-582ab57e1723"],
+Cell[1136486, 18783, 374, 8, 133, "Input",ExpressionUUID->"3096b14b-f638-4c87-8d96-4e258184903b"],
+Cell[1136863, 18793, 282, 5, 81, "Input",ExpressionUUID->"62866b79-30ef-4eb0-a7f9-c9f6648626f9"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1137009, 18799, 98, 0, 70, "Section",ExpressionUUID->"14b76050-b760-4d0c-a885-6d37341d47f7"],
-Cell[1137110, 18801, 421, 9, 70, "Text",ExpressionUUID->"1b1d163d-b3a0-4a8e-8fe6-e023c3ba9213"],
-Cell[1137534, 18812, 356, 11, 70, "DisplayFormula",ExpressionUUID->"5459d072-2e4c-4f0c-a06c-0801116d09b9"],
-Cell[1137893, 18825, 379, 5, 70, "Text",ExpressionUUID->"02d4424b-85df-4368-83ee-c49a583beebe"],
+Cell[1137182, 18803, 142, 2, 66, "Section",ExpressionUUID->"58e89cb0-a552-42d1-b647-6d7f9889dcda"],
+Cell[1137327, 18807, 421, 9, 77, "Text",ExpressionUUID->"4ce7587f-a8fe-41d2-a00b-9a2d6ab1ee43"],
+Cell[1137751, 18818, 356, 11, 47, "DisplayFormula",ExpressionUUID->"84ebed5b-e6d0-4641-9608-47363f220dbd"],
+Cell[1138110, 18831, 379, 5, 77, "Text",ExpressionUUID->"aa987c9f-f2a3-4b48-8b55-6f1d0656423d"],
 Cell[CellGroupData[{
-Cell[1138297, 18834, 320, 6, 70, "Input",ExpressionUUID->"928b0fee-16e0-4892-b368-37d89f95e709"],
-Cell[1138620, 18842, 151897, 2499, 70, "Output",ExpressionUUID->"f49c06d4-4f21-436b-bd1b-d1c90eec738b"]
+Cell[1138514, 18840, 320, 6, 98, "Input",ExpressionUUID->"415bef87-36c5-44d5-b9ae-b141a6f4b40f"],
+Cell[1138837, 18848, 152052, 2502, 249, "Output",ExpressionUUID->"4e7dffe3-70c5-492e-b587-329342476073"]
 }, Open  ]],
-Cell[1290532, 21344, 359, 9, 70, "Text",ExpressionUUID->"ad3964c7-2d96-49d6-95e8-f4fd9ee40dda"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[1290928, 21358, 103, 0, 70, "Section",ExpressionUUID->"16fc1f7d-d01f-4302-b29e-c7462ac3ffd3"],
-Cell[1291034, 21360, 1213, 34, 70, "Text",ExpressionUUID->"c35dd301-46e1-4c07-a9f1-a1b62932794d"],
-Cell[CellGroupData[{
-Cell[1292272, 21398, 478, 9, 70, "Input",ExpressionUUID->"793e5644-bad2-4c9d-a79a-ba36d5522dfc"],
-Cell[1292753, 21409, 105023, 1730, 70, "Output",ExpressionUUID->"86478c64-f283-4e96-b7c4-2d5ad03a35d9"]
-}, Open  ]],
-Cell[1397791, 23142, 588, 23, 70, "Text",ExpressionUUID->"0adf116b-49da-49fd-8951-873d732b1e3a"],
-Cell[1398382, 23167, 623, 17, 70, "Text",ExpressionUUID->"dc8c23ad-8cff-47d9-a522-64fd2cd34647"],
-Cell[1399008, 23186, 576, 15, 70, "DisplayFormula",ExpressionUUID->"96a8f1ab-2e45-47c6-8517-3ff1d448d583"],
-Cell[1399587, 23203, 624, 17, 70, "Text",ExpressionUUID->"696602ae-7614-4631-9115-f677dc92d1a6"]
+Cell[1290904, 21353, 359, 9, 47, "Text",ExpressionUUID->"997515d7-748e-47cf-99ab-f108912c717b"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1400248, 23225, 119, 0, 70, "Section",ExpressionUUID->"e4616aae-d498-4261-b3d3-421710ef7f48"],
-Cell[1400370, 23227, 682, 13, 70, "Text",ExpressionUUID->"a3c94d89-13d5-4be7-89b7-9ac994a101fe"],
-Cell[1401055, 23242, 515, 9, 70, "Text",ExpressionUUID->"aab7cffa-59b6-48ce-a475-06df8926a1c9"],
+Cell[1291300, 21367, 147, 2, 66, "Section",ExpressionUUID->"4f886b92-db87-4e6b-a253-7928d0c56043"],
+Cell[1291450, 21371, 1356, 38, 145, "Text",ExpressionUUID->"9d7a5675-05d8-48d3-9d33-316a9f6ff81f"],
 Cell[CellGroupData[{
-Cell[1401595, 23255, 108, 0, 70, "Subsection",ExpressionUUID->"a4b2ddc7-ec69-41fb-b772-fab4ef30c790"],
-Cell[1401706, 23257, 1170, 29, 70, "Text",ExpressionUUID->"4883c249-c43f-42cd-b39b-b3d8e25a4aff"],
-Cell[1402879, 23288, 354, 11, 70, "DisplayFormula",ExpressionUUID->"06dd2eae-f950-4a2b-a22e-1886ccfb55bc"],
-Cell[1403236, 23301, 681, 23, 70, "DisplayFormula",ExpressionUUID->"a4b96fec-7f44-46aa-8b10-53eb3ed93bed"],
-Cell[1403920, 23326, 485, 16, 70, "DisplayFormula",ExpressionUUID->"0b295ac8-e728-47f9-954e-bad23ee46092"],
-Cell[1404408, 23344, 857, 24, 70, "Text",ExpressionUUID->"fbe96780-fa42-4552-85a2-e0b4ff4ef2a7"]
+Cell[1292831, 21413, 478, 9, 133, "Input",ExpressionUUID->"d4804b69-f600-4607-997d-85abe2533c0d"],
+Cell[1293312, 21424, 105189, 1734, 494, "Output",ExpressionUUID->"0b7805ef-743b-4511-9e59-d1ab4128d533"]
+}, Open  ]],
+Cell[1398516, 23161, 804, 27, 31, "Text",ExpressionUUID->"b424e0c0-7223-4c18-9550-f889e5f60c52"],
+Cell[1399323, 23190, 623, 17, 57, "Text",ExpressionUUID->"9ae344a4-c0eb-44f2-9b89-960bda727ab4"],
+Cell[1399949, 23209, 576, 15, 48, "DisplayFormula",ExpressionUUID->"53cf21d1-0fb5-4ca2-9b90-98004e145768"],
+Cell[1400528, 23226, 1035, 30, 80, "Text",ExpressionUUID->"71c7f925-8486-4ef1-bfb6-40ac9d8e75d3"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1405302, 23373, 112, 0, 70, "Subsection",ExpressionUUID->"c2aa6848-98bc-4891-998c-4ea520832a22"],
-Cell[1405417, 23375, 176, 3, 70, "Text",ExpressionUUID->"3c3abc56-3f7d-4b9a-a176-a06d99736de9"],
-Cell[1405596, 23380, 366, 9, 70, "Item",ExpressionUUID->"66337ae9-1e75-4e9b-b326-e1d11b4efcd8"],
-Cell[1405965, 23391, 575, 15, 70, "Item",ExpressionUUID->"1147f5e7-5013-4fdf-bfdc-4edd76706e62"],
-Cell[1406543, 23408, 472, 13, 70, "Item",ExpressionUUID->"baaa9a17-8c92-4f74-b437-d9d722d7d134"],
-Cell[1407018, 23423, 363, 9, 70, "Item",ExpressionUUID->"110e03d9-17f4-485c-b2ae-e24a21485255"],
-Cell[1407384, 23434, 327, 9, 70, "Item",ExpressionUUID->"2bc5a3a1-bd48-40a7-b991-d83d66b9153a"],
-Cell[1407714, 23445, 366, 9, 70, "Item",ExpressionUUID->"7c5305cf-003b-43de-8c8e-07fa1fc6d17b"],
-Cell[1408083, 23456, 663, 16, 70, "Text",ExpressionUUID->"f19f0c4a-89f5-4d6c-80bb-76f4aa599462"]
+Cell[1401600, 23261, 163, 2, 66, "Section",ExpressionUUID->"4435c673-5fa4-48c7-8b66-8b73d8537d3b"],
+Cell[1401766, 23265, 682, 13, 121, "Text",ExpressionUUID->"d305b2e7-4c4c-4ddc-8e49-801ed91dd863"],
+Cell[1402451, 23280, 515, 9, 99, "Text",ExpressionUUID->"084b3239-b1d2-46aa-afe2-2305e28a7403"],
+Cell[CellGroupData[{
+Cell[1402991, 23293, 149, 2, 53, "Subsection",ExpressionUUID->"c7cdc822-4f19-4f52-8cc0-97dc1134bcec"],
+Cell[1403143, 23297, 1170, 29, 126, "Text",ExpressionUUID->"1f66007d-7205-4708-96bd-6d1e5e156903"],
+Cell[1404316, 23328, 354, 11, 40, "DisplayFormula",ExpressionUUID->"7f272ca3-eb4c-42c3-b31b-bc0553da4968"],
+Cell[1404673, 23341, 681, 23, 41, "DisplayFormula",ExpressionUUID->"cc418d74-5386-4600-b7ec-a2f91085d19d"],
+Cell[1405357, 23366, 485, 16, 41, "DisplayFormula",ExpressionUUID->"dfce6799-10b2-4e48-81fc-bdc0123e3c93"],
+Cell[1405845, 23384, 857, 24, 60, "Text",ExpressionUUID->"e5565313-16ba-46c3-b797-8f77081d0006"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1408783, 23477, 124, 0, 70, "Subsection",ExpressionUUID->"015dee02-b25e-412e-8d1f-aace86012ece"],
-Cell[1408910, 23479, 725, 20, 70, "Text",ExpressionUUID->"4e49a4a2-db5c-48c9-8f6a-141df5790ed6"],
-Cell[1409638, 23501, 714, 24, 70, "DisplayFormula",ExpressionUUID->"f943e2b7-8aae-450c-b776-2dedd6840943"],
-Cell[1410355, 23527, 321, 5, 70, "Input",ExpressionUUID->"8c4c508c-437d-4ea6-8430-4c6003dbd6f3"],
-Cell[1410679, 23534, 1009, 23, 70, "Text",ExpressionUUID->"2ce4484a-e0c2-4fdd-a755-0bba8ecc8d38"]
+Cell[1406739, 23413, 153, 2, 53, "Subsection",ExpressionUUID->"eeb39478-6f83-463c-9fc5-0a2943abf2ac"],
+Cell[1406895, 23417, 176, 3, 33, "Text",ExpressionUUID->"7d9a49ec-f7c3-4b31-8276-2e2ad601c504"],
+Cell[1407074, 23422, 366, 9, 50, "Item",ExpressionUUID->"b7d89bd6-7ad3-4a14-9c95-cecc9f8d50ae"],
+Cell[1407443, 23433, 575, 15, 52, "Item",ExpressionUUID->"66448cda-be69-45ea-82e1-852eed6d5fb6"],
+Cell[1408021, 23450, 472, 13, 32, "Item",ExpressionUUID->"7c06a78c-7cbc-4038-b5dd-a9f019db2de7"],
+Cell[1408496, 23465, 363, 9, 50, "Item",ExpressionUUID->"c8bb4ab5-1657-4fee-8112-a3b7816fa379"],
+Cell[1408862, 23476, 327, 9, 30, "Item",ExpressionUUID->"cf12f747-323d-4428-abac-68245095745a"],
+Cell[1409192, 23487, 366, 9, 50, "Item",ExpressionUUID->"f7277d2b-8754-47b5-bc8d-7b3268e97d00"],
+Cell[1409561, 23498, 663, 16, 57, "Text",ExpressionUUID->"60749f38-b870-4614-a001-5410c4fceaa5"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[1410261, 23519, 165, 2, 53, "Subsection",ExpressionUUID->"5fbb7e3c-49a3-489b-a43d-f5cfb4e06477"],
+Cell[1410429, 23523, 725, 20, 79, "Text",ExpressionUUID->"05fd7f23-1654-46d5-8204-551e0f194707"],
+Cell[1411157, 23545, 714, 24, 42, "DisplayFormula",ExpressionUUID->"521ba063-aa23-499f-bc81-190cfa6f1500"],
+Cell[1411874, 23571, 321, 5, 81, "Input",ExpressionUUID->"35016da7-686d-4e57-a3c4-7f57c4fadb87"],
+Cell[1412198, 23578, 1009, 23, 106, "Text",ExpressionUUID->"620780f1-e060-4690-bbd7-5e9d9df52932"]
 }, Open  ]]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1411737, 23563, 125, 0, 70, "Section",ExpressionUUID->"60e73071-d16a-4ea4-9114-f520da5f8373"],
-Cell[1411865, 23565, 910, 24, 70, "Text",ExpressionUUID->"4977f4f5-bfe0-4486-aad7-c43969907dc2"],
-Cell[1412778, 23591, 570, 15, 70, "DisplayFormula",ExpressionUUID->"3ac4c264-131b-4bd1-bbb9-5e0aaff57a6d"],
-Cell[1413351, 23608, 267, 5, 70, "Text",ExpressionUUID->"74b3d491-76a1-416a-804b-5ebda668df2a"],
-Cell[1413621, 23615, 429, 11, 70, "DisplayFormula",ExpressionUUID->"90f54ea3-fb80-4bb2-ae27-2114e5f861a5"],
-Cell[1414053, 23628, 1067, 26, 70, "Text",ExpressionUUID->"9e27006e-3258-429f-b0a7-009c9997964e"]
+Cell[1413256, 23607, 169, 2, 66, "Section",ExpressionUUID->"2490115e-9990-4486-adbd-9b08850cdd19"],
+Cell[1413428, 23611, 910, 24, 80, "Text",ExpressionUUID->"cbc660c9-3658-46bb-89b8-a5704ece877a"],
+Cell[1414341, 23637, 570, 15, 47, "DisplayFormula",ExpressionUUID->"26250104-5e24-4d0e-b9d1-7db68d106445"],
+Cell[1414914, 23654, 267, 5, 55, "Text",ExpressionUUID->"c926285f-3823-4d44-a66c-c148eb90febd"],
+Cell[1415184, 23661, 429, 11, 37, "DisplayFormula",ExpressionUUID->"f7f4a265-5630-4d40-9337-1fb4243187a0"],
+Cell[1415616, 23674, 1067, 26, 103, "Text",ExpressionUUID->"8bfcdfd2-9375-4f02-a0af-184780878537"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1415157, 23659, 131, 0, 70, "Section",ExpressionUUID->"c842db12-d415-4096-acb5-36f48b26aaec"],
-Cell[1415291, 23661, 540, 12, 70, "Text",ExpressionUUID->"4521c1c7-e771-416d-af1a-66077b59f88c"],
-Cell[1415834, 23675, 333, 5, 70, "Input",ExpressionUUID->"1483adc3-01f7-4dde-8b75-b87a9d1ea51c"],
-Cell[1416170, 23682, 1499, 40, 70, "Text",ExpressionUUID->"6cacf9f5-ebf4-4290-9458-dffd6ff60d36"],
-Cell[1417672, 23724, 40642, 675, 70, "Output",ExpressionUUID->"51e7a974-6d7f-434b-b2f9-8d46c0c73d10"],
-Cell[1458317, 24401, 608, 16, 70, "Text",ExpressionUUID->"db0a38fc-99fe-4dae-9df1-746a6a8a2a40"],
-Cell[1458928, 24419, 379, 6, 70, "Text",ExpressionUUID->"f53851d5-b8d8-4b06-bee8-63e9dc3681db"],
-Cell[1459310, 24427, 579, 14, 70, "Item",ExpressionUUID->"567b2c1f-5195-415e-b772-97a8ae9bd060"],
-Cell[1459892, 24443, 527, 12, 70, "Item",ExpressionUUID->"7a173610-ed8a-4550-84f5-1bee49af0219"],
-Cell[1460422, 24457, 233, 5, 70, "Item",ExpressionUUID->"71365867-ad42-4e03-9f48-a5e5f66b9d0a"],
-Cell[1460658, 24464, 554, 12, 70, "Item",ExpressionUUID->"8b8eb239-7a24-44a5-945b-eab0a03a05bd"],
-Cell[1461215, 24478, 348, 5, 70, "Text",ExpressionUUID->"deb2e111-d4be-4ddd-9a40-c29098c007bd"]
+Cell[1416720, 23705, 175, 2, 66, "Section",ExpressionUUID->"0c9dedbc-cb25-45a3-9e68-ba817bd536f3"],
+Cell[1416898, 23709, 540, 12, 77, "Text",ExpressionUUID->"0a7592fa-629f-44fb-ab26-866174b836d2"],
+Cell[1417441, 23723, 333, 5, 81, "Input",ExpressionUUID->"bdb93fa0-37c1-4548-b07d-a8e7dc1e9669"],
+Cell[1417777, 23730, 1499, 40, 123, "Text",ExpressionUUID->"a4279f68-e40f-4361-837b-e3d28a90bf2d"],
+Cell[1419279, 23772, 40804, 678, 308, "Output",ExpressionUUID->"0b52d843-ac36-45a7-a428-26fa894151d5"],
+Cell[1460086, 24452, 608, 16, 65, "Text",ExpressionUUID->"414dead9-3d2e-4e71-a97e-910c0fffd238"],
+Cell[1460697, 24470, 379, 6, 77, "Text",ExpressionUUID->"701d8a45-de44-40ae-a1b8-bb31d89bcb24"],
+Cell[1461079, 24478, 579, 14, 52, "Item",ExpressionUUID->"a5cb040a-927b-473a-8251-49f51c3c0932"],
+Cell[1461661, 24494, 527, 12, 72, "Item",ExpressionUUID->"4f90deac-8e08-41a9-9ceb-ad16a106d688"],
+Cell[1462191, 24508, 233, 5, 30, "Item",ExpressionUUID->"76dcafd7-6be4-4105-982d-6d04f4119a83"],
+Cell[1462427, 24515, 554, 12, 72, "Item",ExpressionUUID->"c15d75f9-9de9-4551-8554-7038c13488be"],
+Cell[1462984, 24529, 348, 5, 77, "Text",ExpressionUUID->"ab29a33c-237c-4b5e-9d1a-7b5212a4b050"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1461600, 24488, 85, 0, 70, "Section",ExpressionUUID->"92666d66-6c8e-48e8-a41e-363bf44ff929"],
-Cell[1461688, 24490, 1627, 42, 70, "Text",ExpressionUUID->"ac8555e3-ce56-42b6-b477-99757461fdd4"],
+Cell[1463369, 24539, 129, 2, 66, "Section",ExpressionUUID->"8dd40655-5bd8-4bd4-81f1-94947bbba2f5"],
+Cell[1463501, 24543, 1627, 42, 106, "Text",ExpressionUUID->"7aaba0ee-73a6-4524-ad21-f2fa462dda60"],
 Cell[CellGroupData[{
-Cell[1463340, 24536, 402, 7, 70, "Input",ExpressionUUID->"c724ed60-4975-4dee-8db0-6895305b88b7"],
-Cell[1463745, 24545, 33462, 557, 70, "Output",ExpressionUUID->"781025b3-673a-43cf-8b4a-3353893a8adb"]
+Cell[1465153, 24589, 402, 7, 116, "Input",ExpressionUUID->"8d288f9d-5bd6-4165-9ae6-2a0dbe6692ff"],
+Cell[1465558, 24598, 33617, 560, 449, "Output",ExpressionUUID->"be68c3cc-ef7f-4852-97b0-987c9f139037"]
 }, Open  ]],
-Cell[1497222, 25105, 357, 9, 70, "Text",ExpressionUUID->"f30e966d-a66c-4ff6-99d1-a62eb8a3d078"],
-Cell[1497582, 25116, 58193, 963, 70, "Output",ExpressionUUID->"a55b5aa7-7474-4f14-9e27-23ffd9f941cd"],
-Cell[1555778, 26081, 952, 30, 70, "Text",ExpressionUUID->"cc8d6c62-b4ce-4567-8b50-0126e26181b6"],
-Cell[1556733, 26113, 854, 20, 70, "Text",ExpressionUUID->"7c50791e-cd6f-4fe6-b5e6-b3b46a39b3d8"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[1557624, 26138, 97, 0, 70, "Section",ExpressionUUID->"fb2282ad-343f-47b5-8755-34a906f6993a"],
-Cell[1557724, 26140, 882, 19, 70, "Text",ExpressionUUID->"ab27edb5-faad-40b3-a8e6-ef5aa9c1f766"],
-Cell[CellGroupData[{
-Cell[1558631, 26163, 458, 9, 70, "Input",ExpressionUUID->"2fe1d490-1456-4a20-822b-9cd7c83ece80"],
-Cell[1559092, 26174, 194517, 3197, 70, "Output",ExpressionUUID->"3d5642a4-7ffe-42cf-ac06-d69b845729cc"]
-}, Open  ]],
-Cell[1753624, 29374, 1027, 38, 70, "Text",ExpressionUUID->"62fc8023-3a5d-4bfe-bbd6-4f21920eba08"],
-Cell[1754654, 29414, 237, 4, 70, "Text",ExpressionUUID->"7ffe2b60-eca6-4012-bf49-be70e2595096"]
+Cell[1499190, 25161, 357, 9, 47, "Text",ExpressionUUID->"6c1d2542-f2c2-4529-84bf-cef734af359f"],
+Cell[1499550, 25172, 58348, 966, 412, "Output",ExpressionUUID->"61be9171-9d44-48c4-b583-76ad57a99cb6"],
+Cell[1557901, 26140, 952, 30, 49, "Text",ExpressionUUID->"22afff37-8d13-48d3-9a8c-0c78b13b35dd"],
+Cell[1558856, 26172, 868, 21, 106, "Text",ExpressionUUID->"045c29e0-9865-45ca-9ae7-246f7ec5ab46"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1754928, 29423, 99, 0, 70, "Section",ExpressionUUID->"70d1f6f4-e254-43ae-99ba-3289e65216d3"],
-Cell[1755030, 29425, 613, 14, 70, "Text",ExpressionUUID->"ee1cfbd5-fb7c-40fb-b0ee-95fda09db8ff"],
+Cell[1559761, 26198, 141, 2, 66, "Section",ExpressionUUID->"3fca28bd-3803-458c-b90c-52b2c1c644c2"],
+Cell[1559905, 26202, 1240, 26, 169, "Text",ExpressionUUID->"eba1fe5d-c8fa-4126-a710-83f0934c9227"],
 Cell[CellGroupData[{
-Cell[1755668, 29443, 402, 9, 70, "Input",ExpressionUUID->"d12d6c3e-33b8-4722-aca2-419e5ff441b6"],
-Cell[1756073, 29454, 112056, 1846, 70, "Output",ExpressionUUID->"1b1daa3f-241b-453b-b54e-97d903ad5f86"]
+Cell[1561170, 26232, 854, 15, 254, "Input",ExpressionUUID->"a13c8397-6f83-4940-87d4-7c8821ea9fff"],
+Cell[1562027, 26249, 194672, 3200, 279, "Output",ExpressionUUID->"f17a4dc1-e89d-47a4-803d-d5ebd5e138d7"]
 }, Open  ]],
-Cell[1868144, 31303, 561, 14, 70, "Text",ExpressionUUID->"7359ce0f-82c8-4025-a3e1-48e183522d16"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[1868742, 31322, 104, 0, 70, "Section",ExpressionUUID->"28c56f0f-a0ed-4997-9911-7d17bc088051"],
-Cell[1868849, 31324, 201, 3, 70, "Text",ExpressionUUID->"deb6b715-d449-4703-b4c8-3069b3b632d3"],
-Cell[CellGroupData[{
-Cell[1869075, 31331, 405, 8, 70, "Input",ExpressionUUID->"922d421c-5889-40e4-b859-a4e4e16bd70c"],
-Cell[1869483, 31341, 32263, 538, 70, "Output",ExpressionUUID->"eb0b14d4-681b-42f5-87ce-08fdec9b15aa"]
-}, Open  ]],
-Cell[1901761, 31882, 1031, 32, 70, "Text",ExpressionUUID->"03c34e0c-225f-4997-9807-21a06372b651"]
+Cell[1756714, 29452, 1359, 46, 66, "Text",ExpressionUUID->"45dcecb4-69e4-41f6-b0a0-7d73f4c59f60"],
+Cell[1758076, 29500, 572, 13, 77, "Text",ExpressionUUID->"47e0f875-977a-49d4-9419-daa33edcae9f"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1902829, 31919, 100, 0, 70, "Section",ExpressionUUID->"84c6cdb8-2541-430e-9c58-9c7f77c6cccc"],
-Cell[1902932, 31921, 758, 18, 70, "Text",ExpressionUUID->"826d5831-8aa2-4f75-8348-c2513a700132"],
+Cell[1758685, 29518, 143, 2, 66, "Section",ExpressionUUID->"c464095c-92b1-4086-805f-51e9e41c5e4c"],
+Cell[1758831, 29522, 613, 14, 79, "Text",ExpressionUUID->"eea979af-5a82-491a-a0d9-d35e3f6731bc"],
 Cell[CellGroupData[{
-Cell[1903715, 31943, 371, 6, 70, "Input",ExpressionUUID->"ce721ed2-dd41-4ffe-8b65-e222bbeb5414"],
-Cell[1904089, 31951, 110668, 1823, 70, "Output",ExpressionUUID->"1f411aab-656b-453f-a514-54a85b184c41"]
+Cell[1759469, 29540, 402, 9, 116, "Input",ExpressionUUID->"72c743a2-9c12-4815-9ba1-71a99ca036eb"],
+Cell[1759874, 29551, 112218, 1849, 472, "Output",ExpressionUUID->"5b22e100-9672-4d6b-95f3-a22d4c22e564"]
 }, Open  ]],
-Cell[2014772, 33777, 565, 17, 70, "Text",ExpressionUUID->"50d42562-2a30-4b68-813e-75ede2dbcb5c"],
-Cell[2015340, 33796, 366, 7, 70, "Text",ExpressionUUID->"04b9953f-86a5-4248-b9b9-318ece1acb79"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[2015743, 33808, 98, 0, 70, "Section",ExpressionUUID->"2e55ed9d-deeb-4822-9e99-ca6236f10a07"],
-Cell[2015844, 33810, 483, 13, 70, "Text",ExpressionUUID->"63ae157e-f88e-4184-aa49-2e878cc6b2be"],
-Cell[2016330, 33825, 844, 18, 70, "Program",ExpressionUUID->"d403b44b-e17d-4d19-a195-c5342cafd4b6"]
+Cell[1872107, 31403, 679, 16, 49, "Text",ExpressionUUID->"4d3bbbe2-4e9f-42de-913e-1a3646bcd5de"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[2017211, 33848, 90, 0, 70, "Section",ExpressionUUID->"7b5ed461-0818-4843-81a2-ea1f3a3a8dcc"],
-Cell[2017304, 33850, 960, 21, 70, "Text",ExpressionUUID->"d5ce27b3-eb1b-4cd6-a02d-e3b04aa55afe"],
-Cell[2018267, 33873, 529, 8, 70, "Text",ExpressionUUID->"3e926756-21cf-4470-85d3-98096701f3b5"],
-Cell[2018799, 33883, 516, 8, 70, "Text",ExpressionUUID->"42b9ea2d-97f8-4847-8893-6ca6be1ffd99"]
+Cell[1872823, 31424, 148, 2, 66, "Section",ExpressionUUID->"dbf8d6f9-1302-45e7-8937-81193ce04138"],
+Cell[1872974, 31428, 322, 5, 77, "Text",ExpressionUUID->"4499d8cf-b873-4dbf-af7f-60c0ecebd794"],
+Cell[CellGroupData[{
+Cell[1873321, 31437, 405, 8, 133, "Input",ExpressionUUID->"7e5f9a14-c11e-4d5e-a892-d5624994dd1b"],
+Cell[1873729, 31447, 32418, 541, 417, "Output",ExpressionUUID->"2dc5c081-9d5d-4a46-92dd-98429e23b0b3"]
+}, Open  ]],
+Cell[1906162, 31991, 1031, 32, 50, "Text",ExpressionUUID->"4ded6e3b-21e6-4aa5-9937-81f749e510dd"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[2019352, 33896, 107, 0, 70, "Section",ExpressionUUID->"c2131834-74bf-42ec-8698-efa5ef95ab78"],
-Cell[2019462, 33898, 598, 19, 70, "Text",ExpressionUUID->"89a50055-28c7-4b36-8bd4-ed3ced81e05e"],
-Cell[2020063, 33919, 761, 25, 70, "Text",ExpressionUUID->"3b1f0c1f-a31d-49e8-85a2-1ca78d1e12ad"],
-Cell[2020827, 33946, 440, 13, 70, "Text",ExpressionUUID->"3a28291a-56d1-4b27-9a4f-2d6c047e6791"],
-Cell[2021270, 33961, 595, 15, 70, "Text",ExpressionUUID->"fc26be2c-e944-4daf-8430-fa5624043854"],
-Cell[2021868, 33978, 349, 7, 70, "Program",ExpressionUUID->"8661035c-3645-48c5-8e3d-987d0254da06"],
-Cell[2022220, 33987, 106, 1, 70, InheritFromParent,ExpressionUUID->"64db48e2-f1d8-45db-b105-8e5d2c040af7"]
+Cell[1907230, 32028, 144, 2, 66, "Section",ExpressionUUID->"3cf2da8e-5b63-4c53-855c-ad119d933ba5"],
+Cell[1907377, 32032, 758, 18, 81, "Text",ExpressionUUID->"a5e12d39-186d-4437-917c-2882f5121e4c"],
+Cell[CellGroupData[{
+Cell[1908160, 32054, 371, 6, 98, "Input",ExpressionUUID->"47dca5bc-170d-4687-ae9d-ccf0ba45375e"],
+Cell[1908534, 32062, 110823, 1826, 513, "Output",ExpressionUUID->"36017510-84dd-435a-9d33-08a474b5c6a7"]
+}, Open  ]],
+Cell[2019372, 33891, 829, 23, 49, "Text",ExpressionUUID->"5be7b1d6-377d-4806-9935-e6d194ba12f8"],
+Cell[2020204, 33916, 366, 7, 77, "Text",ExpressionUUID->"514548f4-8a7b-438d-81f1-2d9f289ae563"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[2020607, 33928, 142, 2, 66, "Section",ExpressionUUID->"9c9f6882-bbbe-4635-a4c1-b80ab316528d"],
+Cell[2020752, 33932, 483, 13, 83, "Text",ExpressionUUID->"0df3151b-9fb5-4ab8-94f6-41ef087fb07d"],
+Cell[2021238, 33947, 844, 18, 225, "Program",ExpressionUUID->"d520ecf4-ba12-4022-abf5-c9275632ecd3"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[2022119, 33970, 134, 2, 66, "Section",ExpressionUUID->"b04b588a-fe59-4230-98f7-839306b26cac"],
+Cell[2022256, 33974, 1014, 21, 123, "Text",ExpressionUUID->"62e84f5d-4340-4423-b958-0a4908da95da"],
+Cell[2023273, 33997, 529, 8, 99, "Text",ExpressionUUID->"dad9d23c-b535-4863-970e-fce4e4bd65ff"],
+Cell[2023805, 34007, 516, 8, 99, "Text",ExpressionUUID->"07e448ea-a43c-44b6-8661-01a8b39770e9"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[2024358, 34020, 151, 2, 66, "Section",ExpressionUUID->"8069c131-e3ad-438a-86b3-b94d6ccc638d"],
+Cell[2024512, 34024, 598, 19, 55, "Text",ExpressionUUID->"9b7a555c-299c-4f27-b49e-c171c7bba051"],
+Cell[2025113, 34045, 761, 25, 77, "Text",ExpressionUUID->"8b3cb4fc-472c-4b44-8f1e-477f349ba693"],
+Cell[2025877, 34072, 440, 13, 55, "Text",ExpressionUUID->"e10f4c38-24a9-4153-a013-e46235137630"],
+Cell[2026320, 34087, 595, 15, 99, "Text",ExpressionUUID->"893bd317-b78a-41f2-9fae-8368f74c18e6"],
+Cell[2026918, 34104, 349, 7, 80, "Program",ExpressionUUID->"1082d3ea-50ce-47bb-86b1-2f9e10cd5ace"],
+Cell[2027270, 34113, 107, 1, 20, InheritFromParent,ExpressionUUID->"983acedb-2b14-44c2-82dd-ce4210a6f8ee"]
 }, Open  ]]
 }, Open  ]]
 }
 ]
 *)
-
-(* End of internal cache information *)
 

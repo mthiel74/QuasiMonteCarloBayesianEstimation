@@ -43,15 +43,15 @@ styleDefs = Notebook[{
    Cell[StyleData["DisplayFormula"], CellMargins -> {{36, 10}, {10, 10}}],
    Cell[StyleData["Program"], CellMargins -> {{45, 12}, {6, 6}},
       FontFamily -> "Courier", FontSize -> 12]},
-   Visible -> False];
+   Visible -> False, StyleDefinitions -> "PrivateStylesheetFormatting.nb"];
 
 (* ==================================================================
    Cell builders
    ================================================================== *)
-title[t_]    := Cell[t, "Title"];
+title[t_]    := Cell[t, "Title", FontColor -> tealCol];
 subtitle[t_] := Cell[t, "Subtitle"];
-section[t_]  := Cell[t, "Section"];
-subsec[t_]   := Cell[t, "Subsection"];
+section[t_]  := Cell[t, "Section", FontColor -> tealCol];
+subsec[t_]   := Cell[t, "Subsection", FontColor -> RGBColor[0.2, 0.42, 0.5]];
 para[s_]     := Cell[TextData[s], "Text"];
 lead[s_]     := Cell[TextData[s], "Text", FontSize -> 16,
    FontColor -> GrayLevel[0.2]];
@@ -116,6 +116,12 @@ writeAll[cs_List] := ($allCells = Join[$allCells, cs];
    ================================================================== *)
 writeAll[{
 
+title["Quasi-Monte Carlo for a real Bayesian estimation"],
+
+subtitle["Sobol\[CloseCurlyQuote] and Halton sequences against plain Monte \
+Carlo on a six-parameter pharmacokinetic fit \[LongDash] and the textbook \
+convergence gap, measured on a real-data posterior"],
+
 animCell["hero.gif"],
 
 heroCaption[
@@ -128,16 +134,10 @@ accumulate \[LongDash] Monte Carlo crawls down the ", math["1/\[Sqrt]N"],
    ". Generated near the end of this post with one call to ",
    mono["heroAnimation[]"], "."],
 
-title["Quasi-Monte Carlo for a real Bayesian estimation"],
-
-subtitle["Sobol\[CloseCurlyQuote] and Halton sequences against plain Monte \
-Carlo on a six-parameter pharmacokinetic fit \[LongDash] and the textbook \
-convergence gap, measured on real data"],
-
 lead[{"Almost every number a Bayesian reports \[LongDash] a posterior mean, \
 a credible interval, a predicted drug concentration \[LongDash] is secretly \
 an ", bold["integral"], " over the space of unknown parameters. This post \
-is about computing those integrals an order of magnitude more cheaply."}],
+is about computing those integrals up to an order of magnitude more cheaply."}],
 
 para[{"The default tool is ", bold["Monte Carlo"], ": average the integrand \
 over random samples. It is universal and assumption-free, but its error \
@@ -156,9 +156,9 @@ six-parameter pharmacokinetic model fit to the classic ",
    bold["Theophylline"], " data. We build Halton and \
 Sobol\[CloseCurlyQuote] from scratch, set up the posterior, contrast it \
 with classical curve-fitting, and measure the convergence. The headline, \
-on real data: Monte-Carlo slopes near ",
+on a real-data posterior: Monte-Carlo slopes near ",
    imath@RowBox[{"-", "0.5"}], " against Sobol\[CloseCurlyQuote] slopes near \
-", imath@RowBox[{"-", "0.95"}], ", and roughly a 4\[Times]\[Dash]18\[Times] \
+", imath@RowBox[{"-", "0.95"}], ", and a 2\[Times]\[Dash]18\[Times] \
 saving in expensive model evaluations."}],
 
 para[{ital["How to read this:"], " every section opens with the plain idea, \
@@ -249,8 +249,10 @@ the index in a different prime base per coordinate; ",
    bold["Sobol\[CloseCurlyQuote]"], " is a base-2 digital net built from \
 \"direction numbers\" (we use the Joe\[Dash]Kuo tables). Both are a few \
 lines, both are in the attached package. Their ", math["L\:2082"], " ",
-   bold["star discrepancy"], " \[LongDash] the worst box-vs-volume mismatch, \
-by Warnock\[CloseCurlyQuote]s exact formula \[LongDash] decays like ",
+   bold["star discrepancy"], " \[LongDash] the root-mean-square \
+box-vs-volume mismatch by Warnock\[CloseCurlyQuote]s exact formula, a cheap \
+proxy for the ", math["L\[Infinity]"], " discrepancy in the theorem below \
+\[LongDash] decays like ",
    powN[RowBox[{"-", "1", "/", "2"}]], " for random points but nearly ",
    powN[RowBox[{"-", "1"}]], " for these sequences:"}],
 
@@ -264,8 +266,8 @@ ListLogLogPlot[{Transpose[{Nvals, dMC}], Transpose[{Nvals, dHal}],
 
 imgCell["discrepancy.png"],
 caption["Figure 2.  ", math["L\:2082"], " star discrepancy versus ",
-   math["N"], " (log-log). Monte Carlo rides the ", math["N\^(-1/2)"],
-   " line; Halton and Sobol\[CloseCurlyQuote] track ", math["N\^(-1)"], "."],
+   math["N"], " (log-log). Monte Carlo rides the ", powN[RowBox[{"-", "1", "/", "2"}]],
+   " line; Halton and Sobol\[CloseCurlyQuote] track ", powN[RowBox[{"-", "1"}]], "."],
 
 para[{ital["The theorem behind it."], " For an integrand ", math["f"], " of \
 bounded variation ", imath@RowBox[{"V", "(", "f", ")"}], " (Hardy\[Dash]\
@@ -285,9 +287,11 @@ displayMath[RowBox[{"\[LeftBracketingBar]",
 para[{"With ", imath@RowBox[{SubsuperscriptBox["D", "N", "*"], "=",
      RowBox[{"O", "(", SuperscriptBox["N", RowBox[{"-", "1"}]],
        SuperscriptBox[RowBox[{"(", "log", " ", "N", ")"}], "d"], ")"}]}],
-   ", QMC inherits that rate \[LongDash] ", ital["provided"], " the \
-integrand is smooth enough to have finite variation. That proviso drives \
-every modelling choice below."}]
+   " \[LongDash] this ", imath@SubsuperscriptBox["D", "N", "*"], " being the ", math["L\[Infinity]"],
+   " (supremum) star discrepancy, of which Figure 2 plots the cheaper ",
+   math["L\:2082"], " proxy \[LongDash] QMC inherits that rate, ",
+   ital["provided"], " the integrand is smooth enough to have finite \
+variation. That proviso drives every modelling choice below."}]
 }];
 
 
@@ -559,8 +563,9 @@ caption["Figure 5.  Posterior marginals. Clearance ", math["CL"],
 
 callout[bold["Is the Gaussian approximation good enough? "],
    "We check against the full posterior via importance sampling (",
-   mono["FitProposal"], " + ", mono["ImportanceEstimate"], "): the \
-well-identified parameters agree to ~10%. And the convergence demonstration \
+   mono["FitProposal"], " + ", mono["ImportanceEstimate"], "): in our runs \
+the well-identified parameters agree to ~10%. And the convergence \
+demonstration \
 does not depend on the approximation being perfect \[LongDash] only on the \
 integrand we actually integrate being smooth, which it is."]
 }];
@@ -573,37 +578,51 @@ writeAll[{
 
 section["7.  The convergence law"],
 
-para[{"Now the measurement. We estimate two posterior expectations and \
-watch the error fall with the number of points, for Monte Carlo, \
-Sobol\[CloseCurlyQuote], and Halton: the ", bold["mean clearance"], " ",
+para[{"Now the measurement. Both quantities are expectations under the \
+Laplace\[Dash]Gaussian posterior of \[Section]6 \[LongDash] a genuine \
+real-data fit, and crucially a smooth integrand, which is what entitles QMC \
+to its near-", powN[RowBox[{"-", "1"}]], " rate. We watch the error fall with \
+the number of points, for Monte Carlo, Sobol\[CloseCurlyQuote], and Halton: \
+the ", bold["mean clearance"], " ",
    imath@RowBox[{SubscriptBox["E", "post"], "[", "CL", "]"}],
-   " (which has an analytic value under the Gaussian posterior, so we know \
+   " (linear in the parameters, hence analytic under the Gaussian, so we know \
 the truth exactly) and the ", bold["predicted concentration at 6 h"],
-   " (no closed form \[LongDash] each evaluation a model solve). Errors are \
-averaged over independent randomizations (a digital shift for \
+   " (a nonlinear forward-model solve at every draw, with no closed form). \
+Errors are averaged over independent randomizations (a digital shift for \
 Sobol\[CloseCurlyQuote], a Cranley\[Dash]Patterson rotation for Halton):"}],
 
-wlIn["Nlist = 2^Range[7, 15];
-refCL = LaplaceMeanExact[pkLaplace][[2]];          (* exact E[CL] *)
+wlIn["Nlist = 2^Range[7, 15];   meths = {\"MonteCarlo\", \"Sobol\", \"Halton\"};
+(* quantity 1: mean clearance \[LongDash] analytic under the Gaussian *)
+refCL = LaplaceMeanExact[pkLaplace][[2]];
 gCL   = #[[All, 2]] &;
-rmseCL = Association[# -> ExpectationRMSE[#, Nlist, 200, pkLaplace, gCL, refCL] & /@
-   {\"MonteCarlo\", \"Sobol\", \"Halton\"}];
-ListLogLogPlot[Table[Transpose[{Nlist, rmseCL[m]}],
-   {m, {\"MonteCarlo\", \"Sobol\", \"Halton\"}}], Joined -> True, Mesh -> All]"],
+rmseCL = Association[# ->
+   ExpectationRMSE[#, Nlist, 200, pkLaplace, gCL, refCL] & /@ meths];
+(* quantity 2: predicted C(6 h) \[LongDash] a nonlinear model solve *)
+gPredVec = Flatten @ ConcentrationCurves[#, {6.}, subj1[\"dose\"]] &;
+refPred  = Mean @ gPredVec @
+   PosteriorDraws[LDPoints[\"Sobol\", 2^19, 6], pkLaplace];
+rmsePred = Association[# ->
+   ExpectationRMSE[#, Nlist, 200, pkLaplace, gPredVec, refPred] & /@ meths];
+GraphicsRow[ListLogLogPlot[Table[Transpose[{Nlist, #[m]}], {m, meths}],
+     Joined -> True, Mesh -> All] & /@ {rmseCL, rmsePred}]"],
 
 imgCell["convergence.png"],
 caption["Figure 6.  RMSE versus ", math["N"], " (log-log). ", bold["Left:"],
    " posterior mean clearance (analytic reference). ", bold["Right:"],
    " posterior-predictive concentration at 6 h. Monte Carlo follows ",
-   math["N\^(-1/2)"], " (slope \[TildeTilde] ", math["-0.50"],
-   "); Sobol\[CloseCurlyQuote] and Halton follow ", math["N\^(-1)"],
-   " (slopes \[TildeTilde] ", math["-0.95"], "). At ", math["N = 32768"],
+   powN[RowBox[{"-", "1", "/", "2"}]], " (slope \[TildeTilde] ", math["-0.50"],
+   "); Sobol\[CloseCurlyQuote] and Halton both track ", powN[RowBox[{"-", "1"}]],
+   " (measured slopes from about ", math["-0.8"], " to ", math["-0.96"],
+   ", Sobol\[CloseCurlyQuote] steepest). At ", math["N = 32768"],
    " Sobol\[CloseCurlyQuote] is ~50\[Times] more accurate, and the gap keeps \
 widening."],
 
-para[{"That is the headline, on real data: the same number of model solves \
-buys nearly twice the correct digits with Sobol\[CloseCurlyQuote] as with \
-Monte Carlo."}]
+para[{"That is the headline, on a real-data posterior: at a fixed budget of \
+model solves Sobol\[CloseCurlyQuote] reaches roughly ", math["50\[Times]"],
+   " lower error than Monte Carlo at ", math["N = 32768"],
+   " \[LongDash] about 1.7 extra correct digits \[LongDash] and the gap keeps \
+widening. The result rides on the integrand being smooth (\[Section]6), not \
+on the Gaussian being exact."}]
 }];
 
 
@@ -632,7 +651,7 @@ imgCell["dimension.png"],
 caption["Figure 7.  Sobol\[CloseCurlyQuote] efficiency gain (MC RMSE / \
 Sobol\[CloseCurlyQuote] RMSE, fixed budget) versus dimension. Tens to \
 hundreds of times more accurate in low dimension, decaying toward parity \
-as the ", math["(log N)\^d"], " penalty bites. The six-parameter PK problem \
+as the ", imath@SuperscriptBox[RowBox[{"(", "log", " ", "N", ")"}], "d"], " penalty bites. The six-parameter PK problem \
 sits where the gain is still large."]
 }];
 
@@ -645,7 +664,9 @@ writeAll[{
 section["9.  Does it recover the truth?"],
 
 para[{"A fast wrong answer is worthless, so we generate data from known \
-parameters, fit, and check the posterior brackets them:"}],
+parameters, fit, and check the posterior brackets them (on a deliberately \
+denser time grid than the real 11-point design, to isolate parameter \
+recovery from data sparsity):"}],
 
 wlIn["thetaTrue = {1.20, 2.50, 30.0, 1.80, 22.0, 0.45};
 {synProblem, synConc} = SyntheticProblem[thetaTrue, 320.0,
@@ -686,8 +707,8 @@ nForTol[rmsePred[\"MonteCarlo\"], 0.001 refPred] /
 
 imgCell["payoff.png"],
 caption["Figure 9.  Forward-model solves to reach a target accuracy on the \
-predicted concentration. Because MC needs ", math["O(tol\^(-2))"],
-   " and QMC ", math["O(tol\^(-1))"], ", the gap widens with the accuracy \
+predicted concentration. Because MC needs ", bigO[SuperscriptBox["tol", RowBox[{"-", "2"}]]],
+   " and QMC ", bigO[SuperscriptBox["tol", RowBox[{"-", "1"}]]], ", the gap widens with the accuracy \
 demanded: ~2\[Times] at 1%, ~4\[Times] at 0.5%, ~18\[Times] at 0.1%."],
 
 para[{"That is the value proposition in one figure. QMC changes neither the \
@@ -732,12 +753,13 @@ writeAll[{
 
 section["12.  Conclusions"],
 
-para[{"On a real six-parameter pharmacokinetic inference, deterministic \
-low-discrepancy sampling beats plain Monte Carlo by close to a full power \
-of ", math["N"], " \[LongDash] measured slopes near ",
+para[{"On the posterior of a real six-parameter pharmacokinetic fit, \
+deterministic low-discrepancy sampling beats plain Monte Carlo by close to a \
+full power of ", math["N"], " \[LongDash] measured slopes near ",
    imath@RowBox[{"-", "0.95"}], " against ", imath@RowBox[{"-", "0.5"}],
-   ", and an order-of-magnitude saving in model evaluations at useful \
-accuracies. Against classical least squares, the Bayesian treatment adds \
+   ", and a 2\[Times]\[Dash]18\[Times] saving in model evaluations (up to an \
+order of magnitude at the tightest tolerances). Against classical least \
+squares, the Bayesian treatment adds \
 honest, regularized uncertainty where an unidentifiable model would \
 otherwise report nonsense error bars \[LongDash] and QMC is what makes \
 computing that uncertainty cheap."}],
